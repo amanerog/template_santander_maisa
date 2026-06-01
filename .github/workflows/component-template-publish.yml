@@ -1,0 +1,16 @@
+name: Publish template into component-manager
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - prereleased
+      - released
+
+jobs:
+  call-reusable-workflow:
+    name: Component manager template workflow
+    uses: santander-group-shared-assets/gln-workflows/.github/workflows/component-template-publish.yml@v1
+    secrets: inherit

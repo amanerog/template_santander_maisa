@@ -1,0 +1,10 @@
+name: Update User Workflows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-workflows:
+    name: Update user workflows
+    uses: santander-group-shared-assets/gln-workflows/.github/workflows/component-template-update-user-workflows.yml@v1
+    secrets: inherit

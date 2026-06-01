@@ -1,0 +1,21 @@
+name: Maisa migrate service
+version: 1.0.0
+description: Component to migrate maisa elements
+type: process
+labels:
+  component: maisa
+documentation: /community/docs/latest/develop/component/FOO
+visible: true
+catalog:
+  enabled: true
+sast: false
+sca: false
+sonar_profile: NONE
+contact:
+  full_name: Alejandro Manero Gutierrez
+  email: alejandro.manero@servexternos.gruposantander.com
+scope:
+  - component
+repository_template: santander-group-sds-gln/sgt-apm2130-maisa-migrate-service
+internal_configuration:
+  configuration:

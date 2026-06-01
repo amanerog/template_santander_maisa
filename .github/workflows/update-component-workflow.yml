@@ -1,0 +1,10 @@
+name: Update
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-reusable-workflow:
+    name: Update CI/CD workflows
+    uses: santander-group-shared-assets/gln-workflows/.github/workflows/update-component-workflows.yml@v1
+    secrets: inherit

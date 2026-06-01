@@ -1,0 +1,10 @@
+{
+    "ui:order": [
+        "component_branch_strategy"
+    ],
+    "component_branch_strategy": {
+        "ui:default": "git-flow",
+        "ui:widget": "radio"
+    }
+}
+

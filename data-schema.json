@@ -1,0 +1,22 @@
+{
+    "title": "Component template configuration",
+    "description": "Please configure your component template.",
+    "type": "object",
+    "required": [
+      "component_branch_strategy"
+    ],
+    "properties": {
+      "component_branch_strategy": {
+        "title": "Branch Strategy",
+        "description": "Select the branch strategy for your project.",
+        "enumNames": [
+          "Git Flow",
+          "Trunk-based development"
+        ],
+        "enum": [
+          "git-flow", 
+          "trunk-based-development"
+        ]
+      }
+    }
+}

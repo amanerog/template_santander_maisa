@@ -1,0 +1,5 @@
+repositories:
+  - name: "santander-group-shared-assets/gln-user-commons-workflows"
+    version: "v1.4.0"
+    user_workflows:
+      - "workflows/*.yml"

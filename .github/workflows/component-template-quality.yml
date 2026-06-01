@@ -1,0 +1,12 @@
+name: Template quality check
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+    call-reusable-workflow:
+        name: Quality check
+        uses: santander-group-shared-assets/gln-workflows/.github/workflows/component-template-quality.yml@v1
+        secrets: inherit
