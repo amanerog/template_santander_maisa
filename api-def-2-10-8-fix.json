@@ -1,0 +1,4957 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "Studio API",
+    "description" : "Maisa Studio API is a Go-based microservice that provides backend functionality for the Maisa Studio application. \nIt handles audio processing, text extraction, and integrates with various services to deliver a comprehensive solution.\n",
+    "version" : "2.2.0"
+  },
+  "servers" : [ {
+    "url" : "https://gppia-bffstudio.openbank.dev.ai.corp"
+  } ],
+  "paths" : {
+    "/workers/add-to-user/{workerId}" : {
+      "post" : {
+        "operationId" : "AddWorkerToUser",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/add-to-user/{workerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/timeline" : {
+      "get" : {
+        "operationId" : "GetWorkerTimeline",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/timeline",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/signup/verify" : {
+      "post" : {
+        "operationId" : "VerifySignUp",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/signup/verify",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}/new-version" : {
+      "post" : {
+        "operationId" : "CreateWorkerVersion",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/new-version",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}/import" : {
+      "post" : {
+        "operationId" : "ImportExistingWorker",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/import",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/total-deployed-workers-by-user" : {
+      "get" : {
+        "operationId" : "GetTotalDeployedWorkersByUser",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/total-deployed-workers-by-user",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/members/{userId}/preview-delete" : {
+      "get" : {
+        "operationId" : "PreviewDeleteWorkspaceMember",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/members/{userId}/preview-delete",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/service-accounts" : {
+      "get" : {
+        "operationId" : "GetServiceAccountsByWorkerManagerID",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/service-accounts",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "AddServiceAccountsToWorkerManager",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/service-accounts",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteServiceAccountsFromWorkerManager",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/service-accounts",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/login/callback" : {
+      "get" : {
+        "operationId" : "LoginCallback",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/login/callback",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/password/reset/verify" : {
+      "post" : {
+        "operationId" : "VerifyResetPassword",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/password/reset/verify",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/shared/{userId}" : {
+      "put" : {
+        "operationId" : "UpdateSharedWorkerManager",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/shared/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PUT",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteSharedWorkerManager",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/shared/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/signup" : {
+      "post" : {
+        "operationId" : "SignUp",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/signup",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/login/social" : {
+      "get" : {
+        "operationId" : "SocialLogin",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/login/social",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/connectors" : {
+      "post" : {
+        "operationId" : "CreateWorkerConnector",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/connectors",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/refresh" : {
+      "post" : {
+        "operationId" : "RefreshToken",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/refresh",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}/run-again/execution/{executionId}" : {
+      "post" : {
+        "operationId" : "RunWorkerAgain",
+        "parameters" : [ {
+          "name" : "executionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/run-again/execution/{executionId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.executionId" : "method.request.path.executionId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/organizations/{organizationId}/workspaces" : {
+      "get" : {
+        "operationId" : "GetWorkspacesStats",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/organizations/{organizationId}/workspaces",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/tools/paginated" : {
+      "get" : {
+        "operationId" : "GetPaginatedTools",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/tools/paginated",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/members" : {
+      "get" : {
+        "operationId" : "GetWorkerManagerMembers",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/members",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/executions/{executionId}/token-consumptions" : {
+      "get" : {
+        "operationId" : "GetExecutionTokenConsumptions",
+        "parameters" : [ {
+          "name" : "executionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/executions/{executionId}/token-consumptions",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.executionId" : "method.request.path.executionId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/active-users" : {
+      "get" : {
+        "operationId" : "GetActiveUsers",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/active-users",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/workers/{workerId}/integrations/{toolName}" : {
+      "get" : {
+        "operationId" : "GetCloneWorker",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "toolName",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/workers/{workerId}/integrations/{toolName}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.toolName" : "method.request.path.toolName"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "put" : {
+        "operationId" : "PutCloneWorker",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "toolName",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/workers/{workerId}/integrations/{toolName}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PUT",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.toolName" : "method.request.path.toolName"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "CloneWorker",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "toolName",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/workers/{workerId}/integrations/{toolName}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.toolName" : "method.request.path.toolName"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteCloneWorker",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "toolName",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/workers/{workerId}/integrations/{toolName}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.toolName" : "method.request.path.toolName"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/api-keys/{apiKeyId}" : {
+      "delete" : {
+        "operationId" : "RevokeOrganizationApiKeys",
+        "parameters" : [ {
+          "name" : "apiKeyId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/api-keys/{apiKeyId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.apiKeyId" : "method.request.path.apiKeyId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}/run" : {
+      "post" : {
+        "operationId" : "RunWorker",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/run",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/service-accounts/{serviceAccountId}/preview-delete" : {
+      "get" : {
+        "operationId" : "PreviewDeleteWorkspaceServiceAccount",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "serviceAccountId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/service-accounts/{serviceAccountId}/preview-delete",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.serviceAccountId" : "method.request.path.serviceAccountId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/members/{userId}" : {
+      "get" : {
+        "operationId" : "GetWorkspaceMemberById",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/members/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "put" : {
+        "operationId" : "UpdateWorkspaceMember",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/members/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PUT",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteWorkspaceMember",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/members/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/owned" : {
+      "get" : {
+        "operationId" : "GetOrganizationWorkerManagersWorkspaceOwned",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/owned",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/services" : {
+      "get" : {
+        "operationId" : "GetServices",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/services",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/total-workers-by-user" : {
+      "get" : {
+        "operationId" : "GetTotalWorkersByUser",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/total-workers-by-user",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/connectors/{connectorId}" : {
+      "put" : {
+        "operationId" : "UpdateWorkerConnectorKeys",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "connectorId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/connectors/{connectorId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PUT",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.connectorId" : "method.request.path.connectorId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteWorkerConnector",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "connectorId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/connectors/{connectorId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.connectorId" : "method.request.path.connectorId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}/deploy" : {
+      "post" : {
+        "operationId" : "DeployWorker",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/deploy",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}/versions" : {
+      "get" : {
+        "operationId" : "GetWorkerVersions",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/versions",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}" : {
+      "post" : {
+        "operationId" : "AddWorkspaceWorker",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "RemoveWorkspaceWorker",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/members/{userId}/preview-delete" : {
+      "get" : {
+        "operationId" : "PreviewDeleteOrganizationMember",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/members/{userId}/preview-delete",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/tools/tool-services" : {
+      "get" : {
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/tools/tool-services",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "responses" : {
+            "default" : {
+              "statusCode" : "200"
+            }
+          },
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "responseTransferMode" : "BUFFERED"
+        }
+      },
+      "post" : {
+        "operationId" : "GetToolsByToolServices",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/tools/tool-services",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/shared" : {
+      "get" : {
+        "operationId" : "GetUserSharedWorkerManagersByWorkspace",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/shared",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/service-accounts" : {
+      "get" : {
+        "operationId" : "GetServiceAccountsByOrganizationID",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/service-accounts",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "CreateServiceAccount",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/service-accounts",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/total-workers" : {
+      "get" : {
+        "operationId" : "GetTotalWorkers",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/total-workers",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}" : {
+      "get" : {
+        "operationId" : "GetOrganizationById",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "put" : {
+        "operationId" : "UpdateOrganization",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PUT",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteOrganization",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/logout" : {
+      "post" : {
+        "operationId" : "Logout",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/logout",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/me" : {
+      "get" : {
+        "operationId" : "GetWorkspacesByUserRole",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/me",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/api-keys" : {
+      "get" : {
+        "operationId" : "GetOrganizationApiKeys",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/api-keys",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "CreateAPIKey",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/api-keys",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/members" : {
+      "get" : {
+        "operationId" : "GetOrganizationMembers",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/members",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "CreateOrganizationMember",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/members",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/workers/import" : {
+      "post" : {
+        "operationId" : "ImportWorker",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers/import",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/executions/worker/{workerId}/token-consumptions" : {
+      "get" : {
+        "operationId" : "GetExecutionsTokenConsumptionsByWorker",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/executions/worker/{workerId}/token-consumptions",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/file/{executionId}/{fileName}" : {
+      "get" : {
+        "operationId" : "GetFile",
+        "parameters" : [ {
+          "name" : "executionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "fileName",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/file/{executionId}/{fileName}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.fileName" : "method.request.path.fileName",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.executionId" : "method.request.path.executionId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/members/{userId}/workspaces" : {
+      "get" : {
+        "operationId" : "GetWorkspaceByMember",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/members/{userId}/workspaces",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}/settings" : {
+      "get" : {
+        "operationId" : "GetWorkerSettings",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/settings",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "patch" : {
+        "operationId" : "UpdateWorkerSettings",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/settings",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PATCH",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/worker-managers/shared" : {
+      "get" : {
+        "operationId" : "GetUserSharedWorkerManagers",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/worker-managers/shared",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/me" : {
+      "get" : {
+        "operationId" : "GetMyWorkers",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/me",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/shared" : {
+      "get" : {
+        "operationId" : "GetSharedWorkerManagerUsers",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/shared",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "put" : {
+        "operationId" : "UpdateWorkerManagerVisibility",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/shared",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PUT",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "CreateSharedWorkerManager",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/shared",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/service-accounts/{serviceAccountId}/preview-delete" : {
+      "get" : {
+        "operationId" : "PreviewDeleteServiceAccount",
+        "parameters" : [ {
+          "name" : "serviceAccountId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/service-accounts/{serviceAccountId}/preview-delete",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.serviceAccountId" : "method.request.path.serviceAccountId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/total-executions" : {
+      "get" : {
+        "operationId" : "GetTotalExecutions",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/total-executions",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}/stop" : {
+      "post" : {
+        "operationId" : "StopWorker",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/stop",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/total-deployed-workers" : {
+      "get" : {
+        "operationId" : "GetTotalDeployedWorkers",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/total-deployed-workers",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/timeline/contributors" : {
+      "get" : {
+        "operationId" : "GetWorkerTimelineContributors",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/timeline/contributors",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/users/me" : {
+      "get" : {
+        "operationId" : "GetCurrentUserWithOrganizations",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/users/me",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/members" : {
+      "get" : {
+        "operationId" : "GetWorkspaceMembers",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/members",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "CreateWorkspaceMember",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/members",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/me" : {
+      "get" : {
+        "operationId" : "GetCurrentUser",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/me",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/deployed/{workerManagerId}" : {
+      "post" : {
+        "operationId" : "DeployWorkerManager",
+        "parameters" : [ {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/deployed/{workerManagerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/worker-manager/me/summary" : {
+      "get" : {
+        "operationId" : "GetUserWorkerManagerSummary",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/worker-manager/me/summary",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/service-accounts" : {
+      "get" : {
+        "operationId" : "GetServiceAccountsByWorkspaceID",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/service-accounts",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "AddServiceAccountsToWorkspace",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/service-accounts",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "RemoveServiceAccountFromWorkspace",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/service-accounts",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/executions/{executionId}" : {
+      "get" : {
+        "operationId" : "GetExecution",
+        "parameters" : [ {
+          "name" : "executionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/executions/{executionId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.executionId" : "method.request.path.executionId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/unshared" : {
+      "get" : {
+        "operationId" : "GetUserUnsharedWorkerManagersByWorkspace",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/unshared",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/login" : {
+      "post" : {
+        "operationId" : "Login",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/login",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/workers/{workerId}/clone" : {
+      "post" : {
+        "operationId" : "CloneWorker",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/workers/{workerId}/clone",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/execution-checker/execution/{executionId}" : {
+      "get" : {
+        "operationId" : "CheckExecution",
+        "parameters" : [ {
+          "name" : "executionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/execution-checker/execution/{executionId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.executionId" : "method.request.path.executionId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/digital-worker/{workerManagerId}/run" : {
+      "post" : {
+        "operationId" : "RunWorkerManager",
+        "parameters" : [ {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/digital-worker/{workerManagerId}/run",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/preview-delete" : {
+      "get" : {
+        "operationId" : "PreviewDeleteWorkspace",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/preview-delete",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/workers-with-total-versions" : {
+      "get" : {
+        "operationId" : "GetWorkersWithTotalVersions",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/workers-with-total-versions",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/executions/worker/{workerId}" : {
+      "get" : {
+        "operationId" : "GetExecutionsByWorker",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/executions/worker/{workerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/total-executions/{userIds}" : {
+      "get" : {
+        "operationId" : "GetTotalExecutionsByUsers",
+        "parameters" : [ {
+          "name" : "userIds",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/total-executions/{userIds}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.userIds" : "method.request.path.userIds"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/file/{executionId}/listed" : {
+      "get" : {
+        "operationId" : "GetFileListed",
+        "parameters" : [ {
+          "name" : "executionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/file/{executionId}/listed",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.executionId" : "method.request.path.executionId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/user/{userId}" : {
+      "get" : {
+        "operationId" : "GetWorkersByUserId",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/user/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations" : {
+      "post" : {
+        "operationId" : "CreateOrganization",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}/export" : {
+      "get" : {
+        "operationId" : "ExportWorker",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}/export",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/members/{userId}/workers" : {
+      "get" : {
+        "operationId" : "GetWorkspaceMemberWorkers",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/members/{userId}/workers",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/worker-managers/me" : {
+      "get" : {
+        "operationId" : "GetOrganizationWorkerManagersMe",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/worker-managers/me",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/models/supported" : {
+      "get" : {
+        "operationId" : "GetSupportedModels",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/models/supported",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/users/{id}" : {
+      "get" : {
+        "operationId" : "GetUserById",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/users/{id}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.id" : "method.request.path.id"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteUser",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/users/{id}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.id" : "method.request.path.id"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "patch" : {
+        "operationId" : "UpdateUser",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/users/{id}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PATCH",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.id" : "method.request.path.id"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/models" : {
+      "get" : {
+        "operationId" : "GetModels",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/models",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/auth/password/reset" : {
+      "post" : {
+        "operationId" : "ResetPassword",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/auth/password/reset",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces" : {
+      "get" : {
+        "operationId" : "GetOrganizationWorkspaces",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "CreateWorkspace",
+        "parameters" : [ {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers" : {
+      "get" : {
+        "operationId" : "GetWorkspaceWorkers",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/workers/{workerId}" : {
+      "get" : {
+        "operationId" : "GetWorkerByIdInWorkspace",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/workers/{workerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/chats/{chatId}" : {
+      "get" : {
+        "operationId" : "GetChat",
+        "parameters" : [ {
+          "name" : "chatId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/chats/{chatId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.chatId" : "method.request.path.chatId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}" : {
+      "get" : {
+        "operationId" : "GetWorkspaceById",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "put" : {
+        "operationId" : "UpdateWorkspace",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PUT",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteWorkspace",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/user-workers/{userId}" : {
+      "get" : {
+        "operationId" : "GetUserWorkers",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/user-workers/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/timeline/{timelineId}" : {
+      "get" : {
+        "operationId" : "GetWorkerTimelineEntry",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "timelineId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/timeline/{timelineId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.timelineId" : "method.request.path.timelineId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/workers" : {
+      "post" : {
+        "operationId" : "CreateWorker",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/service-accounts/{serviceAccountId}" : {
+      "put" : {
+        "operationId" : "updateServiceAccount",
+        "parameters" : [ {
+          "name" : "serviceAccountId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/service-accounts/{serviceAccountId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PUT",
+          "requestParameters" : {
+            "integration.request.path.serviceAccountId" : "method.request.path.serviceAccountId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteServiceAccount",
+        "parameters" : [ {
+          "name" : "serviceAccountId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/service-accounts/{serviceAccountId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.path.serviceAccountId" : "method.request.path.serviceAccountId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/users" : {
+      "get" : {
+        "operationId" : "GetAllUsers",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/users",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "CreateUser",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/users",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/stats/total-executions-by-user" : {
+      "get" : {
+        "operationId" : "GetTotalExecutionsByUser",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/stats/total-executions-by-user",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/worker-manager/{workerManagerId}" : {
+      "get" : {
+        "operationId" : "GetWorkerManagerById",
+        "parameters" : [ {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/worker-manager/{workerManagerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteWorkerManager",
+        "parameters" : [ {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/worker-manager/{workerManagerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "patch" : {
+        "operationId" : "UpdateWorkerManager",
+        "parameters" : [ {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/worker-manager/{workerManagerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PATCH",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/file/{executionId}" : {
+      "get" : {
+        "operationId" : "GetFilesByExecution",
+        "parameters" : [ {
+          "name" : "executionId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/file/{executionId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.executionId" : "method.request.path.executionId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/members/{userId}" : {
+      "get" : {
+        "operationId" : "GetOrganizationMemberById",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/members/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "put" : {
+        "operationId" : "UpdateOrganizationMember",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/members/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PUT",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteOrganizationMember",
+        "parameters" : [ {
+          "name" : "userId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/members/{userId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.organizationId" : "method.request.path.organizationId",
+            "integration.request.path.userId" : "method.request.path.userId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/unshared" : {
+      "get" : {
+        "operationId" : "GetUnsharedWorkerManagerUsers",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerManagerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/worker-managers/{workerManagerId}/unshared",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerManagerId" : "method.request.path.workerManagerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/execution-checker/by-user-id" : {
+      "post" : {
+        "operationId" : "CheckExecutionByUserId",
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/execution-checker/by-user-id",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/workers/{workerId}" : {
+      "get" : {
+        "operationId" : "GetWorkerById",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "DeleteWorker",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "DELETE",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      },
+      "patch" : {
+        "operationId" : "UpdateWorker",
+        "parameters" : [ {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/workers/{workerId}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "PATCH",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/chats/{id}" : {
+      "get" : {
+        "operationId" : "GetChatHistoryById",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/chats/{id}",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "GET",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.id" : "method.request.path.id",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    },
+    "/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/chats" : {
+      "post" : {
+        "operationId" : "AddChatMessage",
+        "parameters" : [ {
+          "name" : "workspaceId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "workerId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "organizationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "security" : [ {
+          "authorizer" : [ ]
+        } ],
+        "x-amazon-apigateway-integration" : {
+          "type" : "http_proxy",
+          "uri" : "https://vpclink-nlb-maisa-f427780c637e9a22.elb.eu-west-1.amazonaws.com/maisa-studio-api/organizations/{organizationId}/workspaces/{workspaceId}/workers/{workerId}/chats",
+          "connectionId" : "7f2ly5",
+          "httpMethod" : "POST",
+          "requestParameters" : {
+            "integration.request.path.workerId" : "method.request.path.workerId",
+            "integration.request.header.Authorization" : "context.authorizer.authorization",
+            "integration.request.path.workspaceId" : "method.request.path.workspaceId",
+            "integration.request.path.organizationId" : "method.request.path.organizationId"
+          },
+          "connectionType" : "VPC_LINK",
+          "passthroughBehavior" : "when_no_match",
+          "timeoutInMillis" : 29000,
+          "responseTransferMode" : "BUFFERED",
+          "tlsConfig" : {
+            "insecureSkipVerification" : true
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "securitySchemes" : {
+      "authorizer" : {
+        "type" : "apiKey",
+        "name" : "X-Api-Key",
+        "in" : "header",
+        "x-amazon-apigateway-authtype" : "custom",
+        "x-amazon-apigateway-authorizer" : {
+          "type" : "request",
+          "authorizerUri" : "arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-1:857256952876:function:lambdaAuthorizer-maisa/invocations",
+          "authorizerResultTtlInSeconds" : 0,
+          "identitySource" : "method.request.header.X-Api-Key"
+        }
+      }
+    }
+  },
+  "x-amazon-apigateway-security-policy" : "TLS_1_2",
+  "x-amazon-apigateway-policy" : {
+    "Version" : "2012-10-17",
+    "Statement" : [ {
+      "Effect" : "Allow",
+      "Principal" : "*",
+      "Action" : "execute-api:Invoke",
+      "Resource" : "arn:aws:execute-api:eu-west-1:857256952876:ov89w72es5/*/*/*",
+      "Condition" : {
+        "ForAnyValue:StringEquals" : {
+          "aws:sourceVpce" : "vpce-0b555f2dcf5d3961c"
+        }
+      }
+    } ]
+  },
+  "x-amazon-apigateway-binary-media-types" : [ "application/pdf", "*/*", "application/octet-stream" ]
+}
