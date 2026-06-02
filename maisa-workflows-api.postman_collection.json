@@ -1,0 +1,183 @@
+{
+  "info": {
+    "name": "Maisa Workflows API",
+    "description": "API calls used by the Maisa GitHub Actions workflows (export-workers, import-workers, export-maisa-orchestrator, import-maisa-orchestrator).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://gppia-bffstudio.openbank.dev.ai.corp",
+      "description": "Maisa Studio API base URL (source or target environment)"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "description": "Bearer token — value from MAISA_API_KEYS_JSON for the workspace"
+    },
+    {
+      "key": "worker_id",
+      "value": "",
+      "description": "Worker ID (used for single-worker export)"
+    },
+    {
+      "key": "organization_id",
+      "value": "",
+      "description": "Target organization ID (used for import)"
+    },
+    {
+      "key": "workspace_id",
+      "value": "",
+      "description": "Target workspace ID (used for import)"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Workers",
+      "description": "Endpoints used in export-workers.yml and import-workers.yml",
+      "item": [
+        {
+          "name": "List my workers (GET /workers/me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workers/me",
+              "host": ["{{base_url}}"],
+              "path": ["workers", "me"]
+            },
+            "description": "Used in export-workers.yml — lists all workers for the authenticated user.\n\nThe workflow iterates over the returned list and calls the export endpoint for each worker.\n\nExpected response: array of worker objects, or a paginated object with an 'items' / 'workers' / 'data' array.\n\nCorresponds to: GET /workers/me (operationId: GetMyWorkers)"
+          },
+          "response": []
+        },
+        {
+          "name": "Export a single worker (GET /workers/:workerId/export)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/workers/{{worker_id}}/export",
+              "host": ["{{base_url}}"],
+              "path": ["workers", "{{worker_id}}", "export"]
+            },
+            "description": "Used in export-workers.yml — exports a worker definition by ID.\n\nThe response bytes are saved as a .b64 file in the Git repository under:\n  workers/<workspace_name>/<timestamp>/<name>__<type>__<id>.b64\n\nIf the response bytes are valid UTF-8 they are saved as-is; otherwise they are base64-encoded first.\n\nCorresponds to: GET /workers/{workerId}/export (operationId: ExportWorker)"
+          },
+          "response": []
+        },
+        {
+          "name": "Import worker to workspace (POST /organizations/:orgId/workspaces/:wsId/workers/import)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"definition\": \"<base64_or_exported_string_from_.b64_file>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/organizations/{{organization_id}}/workspaces/{{workspace_id}}/workers/import",
+              "host": ["{{base_url}}"],
+              "path": [
+                "organizations",
+                "{{organization_id}}",
+                "workspaces",
+                "{{workspace_id}}",
+                "workers",
+                "import"
+              ]
+            },
+            "description": "Used in import-workers.yml — imports a worker definition into a specific organization/workspace.\n\nThe 'definition' field contains the content read from the .b64 snapshot file in Git.\n\nWorkflow inputs required:\n  - target_organization_id  → :orgId\n  - target_workspace_id     → :wsId\n\nThe workflow looks for the new worker 'id' in the response under:\n  response.id | response.workerId | response.reference | response[0].id | response[0].reference\n\nCorresponds to: POST /organizations/{organizationId}/workspaces/{workspaceId}/workers/import (operationId: ImportWorker)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth (reference)",
+      "description": "Auth endpoints for reference — not directly called by the CI workflows (the workflows use a pre-existing token stored in secrets), but useful for manual testing.",
+      "item": [
+        {
+          "name": "Login (POST /auth/login)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"<your_email>\",\n  \"password\": \"<your_password>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Not used directly by the CI workflows. Use this to obtain a Bearer token for manual testing.\n\nCopy the token from the response and paste it into the collection variable 'token'.\n\nCorresponds to: POST /auth/login (operationId: Login)"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh token (POST /auth/refresh)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"<your_refresh_token>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Not used by the CI workflows. Use this to refresh an expired Bearer token during manual testing.\n\nCorresponds to: POST /auth/refresh (operationId: RefreshToken)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
