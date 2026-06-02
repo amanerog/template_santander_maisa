@@ -1,0 +1,85 @@
+name: Protect base64 files
+
+on:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  check-b64-modifications:
+    name: Block unauthorized .b64 file changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect and revert unauthorized .b64 modifications
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.event.after }}"
+
+          # First push to a new branch — compare against the empty tree
+          if [[ "$BEFORE" == "0000000000000000000000000000000000000000" ]]; then
+            RANGE="$(git hash-object -t tree /dev/null)..$AFTER"
+            NEW_BRANCH=true
+          else
+            RANGE="$BEFORE..$AFTER"
+            NEW_BRANCH=false
+          fi
+
+          CHANGED_B64=$(git diff --name-only "$RANGE" -- '*.b64' || true)
+
+          if [ -z "$CHANGED_B64" ]; then
+            echo "✅ No .b64 files modified in this push."
+            exit 0
+          fi
+
+          echo "⚠️  .b64 files changed in this push:"
+          echo "$CHANGED_B64"
+          echo ""
+
+          UNAUTHORIZED=false
+          while IFS=$'\t' read -r commit_hash author_email author_name; do
+            [ -z "$commit_hash" ] && continue
+            if [[ "$author_email" != "github-actions[bot]@users.noreply.github.com" ]]; then
+              echo "❌ Unauthorized modification detected:"
+              echo "   Commit : $commit_hash"
+              echo "   Author : $author_name <$author_email>"
+              echo ""
+              UNAUTHORIZED=true
+            fi
+          done < <(git log --format=$'%H\t%ae\t%an' "$RANGE" -- '*.b64')
+
+          if [ "$UNAUTHORIZED" = false ]; then
+            echo "✅ All .b64 modifications were made by the authorized bot."
+            exit 0
+          fi
+
+          echo "🔄 Reverting unauthorized .b64 changes..."
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            if [ "$NEW_BRANCH" = true ]; then
+              git rm -f "$file" 2>/dev/null || true
+            else
+              git checkout "$BEFORE" -- "$file" 2>/dev/null || git rm -f "$file" 2>/dev/null || true
+            fi
+          done <<< "$CHANGED_B64"
+
+          git add -A
+          git commit -m "revert: undo unauthorized .b64 file modifications [skip ci]"
+          git push origin HEAD:"${{ github.ref_name }}"
+
+          echo "❌ Unauthorized .b64 modifications have been reverted."
+          echo "   .b64 files must only be modified by github-actions[bot] via the export workflows."
+          exit 1

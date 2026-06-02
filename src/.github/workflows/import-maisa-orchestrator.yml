@@ -1,0 +1,46 @@
+name: Import Maisa (Orchestrator)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Target Maisa URL"
+        required: true
+        type: string
+      workspace_name:
+        description: "Workspace SOURCE (folder workers/<workspace_name>/...)"
+        required: true
+        type: string
+      target_workspace_name:
+        description: "Workspace TARGET in Maisa (used to resolve API key)"
+        required: true
+        type: string
+      target_organization_id:
+        description: "Target Maisa organization ID"
+        required: true
+        type: string
+      target_workspace_id:
+        description: "Target Maisa workspace ID"
+        required: true
+        type: string
+      snapshot:
+        description: "Snapshot folder (YYYYMMDD-HHMMSS). Empty = latest"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  import-workers:
+    uses: ./.github/workflows/import-workers.yml
+    with:
+      target_url: ${{ inputs.target_url }}
+      workspace_name: ${{ inputs.workspace_name }}
+      target_workspace_name: ${{ inputs.target_workspace_name }}
+      target_organization_id: ${{ inputs.target_organization_id }}
+      target_workspace_id: ${{ inputs.target_workspace_id }}
+      snapshot: ${{ inputs.snapshot }}
+      mode: all
+    secrets:
+      maisa_api_keys_json: ${{ secrets.MAISA_API_KEYS_JSON }}

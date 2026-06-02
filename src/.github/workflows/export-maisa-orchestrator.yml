@@ -1,0 +1,37 @@
+name: Export Maisa (Orchestrator)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: "Source Maisa URL"
+        required: true
+        type: string
+      workspace_name:
+        description: "Workspace name (workers/<workspace_name>/...)"
+        required: true
+        type: string
+      source_workspace_name:
+        description: "Workspace SOURCE in Maisa (used to resolve API key)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+# Serializes runs to avoid push conflicts since all exports push to the same feature/export-data branch
+concurrency:
+  group: maisa-export-feature-export-data
+  cancel-in-progress: false
+
+jobs:
+  export-workers:
+    name: Export workers
+    uses: ./.github/workflows/export-workers.yml
+    with:
+      source_url: ${{ inputs.source_url }}
+      workspace_name: ${{ inputs.workspace_name }}
+      source_workspace_name: ${{ inputs.source_workspace_name }}
+      mode: all
+    secrets:
+      maisa_api_keys_json: ${{ secrets.maisa_api_keys_json || secrets.MAISA_API_KEYS_JSON }}

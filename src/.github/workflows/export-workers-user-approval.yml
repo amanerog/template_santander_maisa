@@ -1,0 +1,368 @@
+name: Export Workers (with user approval)
+
+# This workflow exports Maisa workers to the Git repository.
+# It uses GitHub Environments for approval gating (standard Gluon pattern).
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: "Source Maisa URL (environment-type is auto-detected from the URL)"
+        required: true
+      workspace_name:
+        description: "Workspace name (workers/<workspace_name>/...)"
+        required: true
+      source_workspace_name:
+        description: "Workspace SOURCE in Maisa (used to resolve API key)"
+        required: true
+      mode:
+        description: "Export mode: all = exports all workers, single = exports one worker by id"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - "all"
+          - "single"
+      worker_id:
+        description: "Source worker id (only if mode=single)"
+        required: false
+
+  workflow_call:
+    inputs:
+      source_url:
+        required: true
+        type: string
+      workspace_name:
+        required: true
+        type: string
+      source_workspace_name:
+        required: true
+        type: string
+      mode:
+        required: false
+        type: string
+        default: "all"
+      worker_id:
+        required: false
+        type: string
+    secrets:
+      maisa_api_keys_json:
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  detect-environment:
+    name: Detect Environment Type from URL
+    runs-on: base-runner
+    outputs:
+      environment-type: ${{ steps.detect.outputs.environment-type }}
+    steps:
+      - name: Detect environment-type from source_url
+        id: detect
+        shell: bash
+        env:
+          SOURCE_URL: ${{ inputs.source_url }}
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          import re
+
+          source_url = os.environ.get("SOURCE_URL", "").strip().lower()
+
+          patterns = {
+              "certification": [r"cert", r"dev", r"development", r"qa", r"test"],
+              "preproduction": [r"pre", r"preprod", r"uat", r"staging"],
+              "production": [r"prod", r"prd", r"production"]
+          }
+
+          def detect_environment_from_url(url):
+              for pattern in patterns["production"]:
+                  if re.search(pattern, url):
+                      return "production"
+              for pattern in patterns["preproduction"]:
+                  if re.search(pattern, url):
+                      return "preproduction"
+              for pattern in patterns["certification"]:
+                  if re.search(pattern, url):
+                      return "certification"
+              return None
+
+          detected_env = detect_environment_from_url(source_url)
+
+          if detected_env is None:
+              print(f"❌ ERROR: Could not detect environment from URL: {source_url}")
+              print(f"")
+              print(f"   The URL must contain one of these patterns:")
+              print(f"   - CERTIFICATION: cert, dev, development, qa, test")
+              print(f"   - PREPRODUCTION: pre, preprod, uat, staging")
+              print(f"   - PRODUCTION: prod, prd, production")
+              print(f"")
+              print(f"   Valid examples:")
+              print(f"   - https://maisa-dev.santander.com → certification")
+              print(f"   - https://maisa-preprod.santander.com → preproduction")
+              print(f"   - https://maisa-prod.santander.com → production")
+              sys.exit(1)
+
+          print(f"🔍 Environment detected from URL: {detected_env.upper()}")
+          print(f"   URL: {source_url}")
+          print(f"")
+
+          approval_info = {
+              "certification": "No approval required",
+              "preproduction": "Approval REQUIRED",
+              "production": "Approval MANDATORY"
+          }
+          print(f"   ℹ️  {approval_info[detected_env]}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"environment-type={detected_env}\n")
+
+          print(f"")
+          print(f"✅ Environment configured: {detected_env}")
+          PY
+
+  export-workers:
+    name: Export Workers from Maisa
+    needs: detect-environment
+    runs-on: base-runner
+    # 🔐 AUTO APPROVAL: environment is detected from source_url
+    # - URL contains "cert/dev/qa" → certification (no approval)
+    # - URL contains "pre/preprod/uat" → preproduction (approval required)
+    # - URL contains "prod/production" → production (approval mandatory)
+    #
+    # NOTE: Environments (certification, preproduction, production) must exist
+    # in Settings → Environments with the appropriate reviewers configured.
+    environment: ${{ needs.detect-environment.outputs.environment-type }}
+
+    steps:
+      - name: Display detected environment information
+        shell: bash
+        run: |
+          echo "🔍 Environment Type: ${{ needs.detect-environment.outputs.environment-type }}"
+          echo "📍 Source URL: ${{ inputs.source_url }}"
+          echo "📦 Workspace: ${{ inputs.workspace_name }}"
+          echo ""
+
+          case "${{ needs.detect-environment.outputs.environment-type }}" in
+            "certification")
+              echo "✅ CERTIFICATION: Export will run immediately without approval"
+              ;;
+            "preproduction")
+              echo "⚠️  PREPRODUCTION: Approval required before continuing"
+              ;;
+            "production")
+              echo "🔒 PRODUCTION: Approval MANDATORY before continuing"
+              ;;
+          esac
+
+      - name: Checkout export branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/export-data
+          fetch-depth: 0
+
+      - name: Compute export timestamp
+        id: ts
+        shell: bash
+        run: |
+          echo "value=$(date -u +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install httpx
+
+      - name: Resolve SOURCE_MAISA_API_KEY from JSON secret (by source_workspace_name)
+        env:
+          SOURCE_WORKSPACE_NAME: ${{ inputs.source_workspace_name }}
+          MAISA_API_KEYS_JSON: ${{ secrets.maisa_api_keys_json || secrets.MAISA_API_KEYS_JSON }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os
+
+          ws = os.environ.get("SOURCE_WORKSPACE_NAME", "").strip()
+          raw = os.environ.get("MAISA_API_KEYS_JSON", "").strip()
+
+          if not ws:
+              raise SystemExit("❌ Missing source workspace name (source_workspace_name).")
+
+          if not raw:
+              raise SystemExit(
+                  "❌ Missing JSON secret. Define GitHub secret MAISA_API_KEYS_JSON (workflow_dispatch) "
+                  "or pass secrets.maisa_api_keys_json (workflow_call)."
+              )
+
+          try:
+              data = json.loads(raw)
+          except Exception as e:
+              raise SystemExit(f"❌ MAISA_API_KEYS_JSON is not valid JSON: {e}")
+
+          if not isinstance(data, dict):
+              raise SystemExit("❌ MAISA_API_KEYS_JSON must be a JSON object like {\"workspace\": \"<api_key>\", ...}")
+
+          key = data.get(ws)
+          if not key:
+              available = ", ".join(sorted(map(str, data.keys())))
+              raise SystemExit(f"❌ No API key found for source workspace '{ws}'. Available keys: {available}")
+
+          print(f"::add-mask::{key}")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
+              f.write(f"SOURCE_MAISA_API_KEY={key}\n")
+          PY
+
+      - name: Export workers to workers/<workspace>/<timestamp> (base64 only)
+        env:
+          SOURCE_MAISA_URL: ${{ inputs.source_url }}
+          SOURCE_MAISA_API_KEY: ${{ env.SOURCE_MAISA_API_KEY }}
+          WORKSPACE_NAME: ${{ inputs.workspace_name }}
+          MODE: ${{ inputs.mode }}
+          WORKER_ID: ${{ inputs.worker_id }}
+          EXPORT_DIR: workers/${{ inputs.workspace_name }}/${{ steps.ts.outputs.value }}
+        run: |
+          python << 'EOF'
+          import asyncio
+          import base64
+          import json
+          import os
+          from dataclasses import dataclass
+          from typing import Any, Optional, Dict, List
+          from pathlib import Path
+          import httpx
+
+          TIMEOUT = 120
+
+          @dataclass
+          class MaisaAPI:
+              base_url: str
+              api_key: str
+
+              def _headers(self) -> Dict[str, str]:
+                  return {"Authorization": f"Bearer {self.api_key}"}
+
+              async def _request(
+                  self,
+                  method: str,
+                  path: str,
+                  *,
+                  json_body: Optional[Any] = None,
+                  params: Optional[Dict[str, Any]] = None,
+                  raw: bool = False,
+              ) -> Any:
+                  url = f"{self.base_url.rstrip('/')}{path}"
+                  while True:
+                      async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+                          kwargs = {"headers": self._headers(), "follow_redirects": True}
+                          if json_body is not None:
+                              kwargs["json"] = json_body
+                          if params is not None:
+                              kwargs["params"] = params
+                          resp = await client.request(method, url, **kwargs)
+                          if resp.status_code == 429:
+                              print("  ⏳ Rate limited, waiting 2s...")
+                              await asyncio.sleep(2)
+                              continue
+                          resp.raise_for_status()
+                          if raw:
+                              return resp.content
+                          if resp.headers.get("content-type", "").startswith("application/octet-stream"):
+                              return resp.content
+                          if not resp.content:
+                              return None
+                          return resp.json()
+
+              async def get(self, path: str, **kw: Any) -> Any:
+                  return await self._request("GET", path, **kw)
+
+              async def post(self, path: str, **kw: Any) -> Any:
+                  return await self._request("POST", path, **kw)
+
+          def safe_slug(s: str) -> str:
+              keep = []
+              for ch in (s or ""):
+                  if ch.isalnum() or ch in ("-", "_", "."):
+                      keep.append(ch)
+                  elif ch.isspace():
+                      keep.append("_")
+              out = "".join(keep).strip("._-")
+              return out or "worker"
+
+          async def list_workers(api: MaisaAPI) -> List[Dict[str, Any]]:
+              result = await api.get("/workers/me")
+              if isinstance(result, list):
+                  return result
+              if isinstance(result, dict):
+                  return result.get("items", result.get("workers", result.get("data", [])))
+              return []
+
+          async def export_worker(api: MaisaAPI, worker_id: str) -> bytes:
+              return await api.get(f"/workers/{worker_id}/export", raw=True)
+
+          async def main():
+              source_url = os.environ["SOURCE_MAISA_URL"]
+              source_key = os.environ["SOURCE_MAISA_API_KEY"]
+              mode = os.environ.get("MODE") or "all"
+              worker_id = os.environ.get("WORKER_ID") or ""
+              export_dir = Path(os.environ["EXPORT_DIR"])
+
+              if mode not in ("all", "single"):
+                  raise SystemExit(f"❌ Invalid mode: {mode}")
+
+              if mode == "single" and not worker_id:
+                  raise SystemExit("❌ mode=single requires WORKER_ID")
+
+              api = MaisaAPI(base_url=source_url, api_key=source_key)
+
+              workers = await list_workers(api)
+              if mode == "single":
+                  workers = [w for w in workers if w.get("id") == worker_id]
+                  if not workers:
+                      raise SystemExit(f"❌ Worker '{worker_id}' not found in source")
+
+              print(f"🤖 Found {len(workers)} worker(s)")
+              for w in workers:
+                  print(f"  - {w.get('name', '')} ({w.get('id')}) [{w.get('type', 'worker')}]")
+
+              export_dir.mkdir(parents=True, exist_ok=True)
+
+              for w in workers:
+                  w_id = w["id"]
+                  w_name = w.get("name", "")
+                  w_type = w.get("type", "worker")
+
+                  print(f"\n  Exporting {w_name} ({w_id}) [{w_type}] ...")
+                  export_bytes = await export_worker(api, w_id)
+
+                  try:
+                      content = export_bytes.decode("utf-8").strip() + "\n"
+                  except UnicodeDecodeError:
+                      content = base64.b64encode(export_bytes).decode("utf-8") + "\n"
+
+                  filename = f"{safe_slug(w_name)}__{w_type}__{w_id}.b64"
+                  out_path = export_dir / filename
+                  out_path.write_text(content, encoding="utf-8")
+
+                  print(f"    ✅ wrote {out_path} ({len(content)} chars)")
+
+              print(f"\n✅ Export completed. Files written under: {export_dir}")
+
+          asyncio.run(main())
+          EOF
+
+      - name: Commit & push exports to feature/export-data
+        run: |
+          set -e
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "workers/${{ inputs.workspace_name }}"
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore(maisa): export workers to workers/${{ inputs.workspace_name }}/${{ steps.ts.outputs.value }} (run ${{ github.run_id }})"
+          git push origin HEAD:feature/export-data
