@@ -1,7 +1,7 @@
 name: Maisa migrate service
-version: 1.0.0
+version: 1.0.1
 description: Component to migrate maisa elements
-type: process
+type: library
 labels:
   component: maisa
 documentation: /community/docs/latest/develop/component/FOO

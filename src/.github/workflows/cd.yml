@@ -2,11 +2,11 @@ name: Deploy
 
 on:
   workflow_dispatch:
-    inputs:
+    inputs:      
       version:
         required: true
         type: string
-        description: 'Version to deploy'
+        description: 'Version to deploy'   
       environment:
         required: false
         type: string
@@ -22,7 +22,7 @@ on:
       task-number:
         required: false
         type: string
-        description: "SNOW Task Number"
+        description: "SNOW Task Number"  
 
 jobs:
     call-reusable-workflow:
@@ -30,7 +30,7 @@ jobs:
         uses: santander-group-shared-assets/gln-workflows/.github/workflows/cd.yml@v1
         with:
           version: ${{ inputs.version }}
-          technology: <technology to be set by component template>
+          technology: <technology to be set by component template> 
           environment: ${{ inputs.environment }}
           environment-type: ${{ inputs.environment-type }}
           task-number: ${{ inputs.task-number }}
