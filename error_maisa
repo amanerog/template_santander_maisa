@@ -1,15 +1,43 @@
-echo "📌 Current branch: $(git branch --show-current)"
-echo "📌 Current commit: $(git rev-parse HEAD)"
-echo "📂 Working directory: $(pwd)"
-echo "📂 agents/ folder contents:"
-find agents/ -type f 2>/dev/null || echo "  (agents/ folder not found)"
-echo ""
-echo "📋 git status:"
-git status
+🔧 Maisa URL: https://gppaas-maisa-plat.sgtech.pre.corp/
+🔐 Auth type: cookie
+📁 Organization ID: 69c54eb67d39ad688fe95a85
+📁 Workspace ID: 69fb587f3ffc1e5e505a116a
+📦 Export mode: all
 
+🤖 Fetching all worker managers from workspace...
+🌐 Equivalent curl:
+curl -k -X GET 'https://gppaas-maisa-plat.sgtech.pre.corp/maisa-bff/organizations/69c54eb67d39ad688fe95a85/workspaces/69fb587f3ffc1e5e505a116a/worker-managers?limit=100&page=1' \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -H 'User-Agent: Mozilla/5.0 (compatible; MaisaExporter/1.0)' \
+  -H 'Cookie: maisa_pro_sidebar_state=true; maisaai-se...[MASKED]'
+✅ Found 1 worker manager(s):
+  - test (6a2fad0818ecbc197d3c1212) [DRAFT] - 1 runs
 
+  📥 Exporting test (6a2fad0818ecbc197d3c1212) [DRAFT] ...
+    ❌ Error: local variable 'qs' referenced before assignment
 
+✅ Export completed!
+📊 Summary:
+   - Total workers found: 1
+   - Successfully exported: 0
+   - Failed/Skipped: 1
+📁 Files written to: agents/test/20260618-083408
 
-echo ""
-echo "📋 git status after add:"
-git status
+📌 Current branch: feature/export-data
+📌 Current commit: 16eb48bd47a307fc2d6a035ba4a4188505c4103c
+📂 Working directory: /runnertmp/_work/sgt-ap11568-testmaisainte/sgt-ap11568-testmaisainte
+📂 agents/ folder contents:
+
+📋 git status:
+On branch feature/export-data
+Your branch is up to date with 'origin/feature/export-data'.
+
+nothing to commit, working tree clean
+
+📋 git status after add:
+On branch feature/export-data
+Your branch is up to date with 'origin/feature/export-data'.
+
+nothing to commit, working tree clean
+ℹ️  No changes to commit.
