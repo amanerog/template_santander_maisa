@@ -1,15 +1,15 @@
-# Build equivalent curl for debugging
-      170 +                          curl_parts = [f"curl -k -X {method} '{url}'"]
-      171 +                          for h_name, h_val in self._headers().items():
-      172 +                              # Mask the cookie value in logs
-      173 +                              if h_name.lower() == "cookie":
-      174 +                                  safe_val = h_val[:40] + "...[MASKED]"
-      175 +                              else:
-      176 +                                  safe_val = h_val
-      177 +                              curl_parts.append(f"  -H '{h_name}: {safe_val}'")
-      178 +                          if json_body is not None:
-      179 +                              curl_parts.append(f"  -d '{json.dumps(json_body)}'")
-      180 +                          if params is not None:
-      181 +                              qs = "&".join(f"{k}={v}" for k, v in params.items())
-      182 +                              curl_parts[0] = f"curl -k -X {method} '{url}?{qs}'"
-      183 +                          print("🌐 Equivalent curl:\n" + " \\\n".join(curl_parts))
+echo "📌 Current branch: $(git branch --show-current)"
+echo "📌 Current commit: $(git rev-parse HEAD)"
+echo "📂 Working directory: $(pwd)"
+echo "📂 agents/ folder contents:"
+find agents/ -type f 2>/dev/null || echo "  (agents/ folder not found)"
+echo ""
+echo "📋 git status:"
+git status
+
+
+
+
+echo ""
+echo "📋 git status after add:"
+git status
