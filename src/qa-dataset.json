@@ -1,0 +1,23 @@
+{
+  "agent_name": "YOUR_WORKER_NAME_HERE",
+  "tests": [
+    {
+      "id": "test-1",
+      "description": "Basic sanity check — non-empty response",
+      "input_variables": {
+        "query": "Hello, can you hear me?"
+      },
+      "expected": "",
+      "match": "not_empty"
+    },
+    {
+      "id": "test-2",
+      "description": "Expected keyword in response",
+      "input_variables": {
+        "query": "What is 2 plus 2?"
+      },
+      "expected": "4",
+      "match": "contains"
+    }
+  ]
+}
