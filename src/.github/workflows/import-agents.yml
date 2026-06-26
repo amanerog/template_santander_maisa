@@ -32,6 +32,17 @@ on:
       agent_id:
         description: "Agent id (only if mode=single). It's the wm_id part of the .b64 filename"
         required: false
+      skip_import:
+        description: "Skip the import step and test an already-deployed agent instead"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      test_wm_id:
+        description: "Worker Manager ID of the already-deployed agent to test (required when skip_import=true)"
+        required: false
 
   workflow_call:
     inputs:
@@ -58,6 +69,13 @@ on:
         type: string
         default: "all"
       agent_id:
+        required: false
+        type: string
+      skip_import:
+        required: false
+        type: string
+        default: "false"
+      test_wm_id:
         required: false
         type: string
     secrets:
@@ -110,11 +128,14 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # JOB 2: Import agents from Git snapshot into Maisa
+  # Skipped when skip_import=true — the post-import job will test the agent
+  # specified by test_wm_id in the origin environment instead.
   # ---------------------------------------------------------------------------
   import-agents:
     name: Import agents
     runs-on: base-runner
     needs: qa-test
+    if: inputs.skip_import != 'true'
 
     steps:
       - name: Checkout export branch (read exports)
@@ -413,12 +434,19 @@ jobs:
           EOF
 
   # ---------------------------------------------------------------------------
-  # JOB 3: Post-import — run QA golden dataset tests against the deployed agent
+  # JOB 3: Post-import — run QA golden dataset tests against the deployed agent.
+  # Runs whether import-agents succeeded OR was skipped (skip_import=true).
+  # When skip_import=true, TEST_WM_ID is passed so qa-test.py targets that
+  # specific already-deployed agent directly.
   # ---------------------------------------------------------------------------
   post-import:
     name: Post-import QA tests
     runs-on: base-runner
-    needs: import-agents
+    needs: [qa-test, import-agents]
+    if: |
+      always() &&
+      needs.qa-test.result == 'success' &&
+      (needs.import-agents.result == 'success' || needs.import-agents.result == 'skipped')
 
     steps:
       - name: Checkout export branch (read scripts and dataset)
@@ -472,6 +500,7 @@ jobs:
           WORKSPACE_NAME: ${{ inputs.workspace_name }}
           SNAPSHOT: ${{ inputs.snapshot }}
           AGENT_ID: ${{ inputs.agent_id }}
+          TEST_WM_ID: ${{ inputs.test_wm_id }}
         shell: bash
         run: |
           if [ ! -f "scripts/qa-dataset.json" ]; then
@@ -503,5 +532,6 @@ jobs:
           WORKSPACE_NAME: ${{ inputs.workspace_name }}
           SNAPSHOT: ${{ inputs.snapshot }}
           AGENT_ID: ${{ inputs.agent_id }}
+          TEST_WM_ID: ${{ inputs.test_wm_id }}
         run: |
           python scripts/post_import.py
