@@ -94,16 +94,12 @@ jobs:
     runs-on: base-runner
 
     steps:
-      - name: Checkout export branch (read exports)
+      - name: Checkout main branch (read scripts)
         uses: actions/checkout@v4
         with:
-          ref: feature/export-data
+          ref: development
           fetch-depth: 1
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
 
       - name: Run QA test script (must print OK)
         shell: bash
@@ -144,10 +140,6 @@ jobs:
           ref: feature/export-data
           fetch-depth: 1
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -449,41 +441,51 @@ jobs:
       (needs.import-agents.result == 'success' || needs.import-agents.result == 'skipped')
 
     steps:
-      - name: Checkout export branch (read scripts and dataset)
+      - name: Checkout main branch (read scripts and dataset)
         uses: actions/checkout@v4
         with:
-          ref: feature/export-data
+          ref: development
           fetch-depth: 1
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install httpx
 
-      - name: Resolve TARGET_MAISA_COOKIE from JSON secret
+      - name: Resolve TARGET_MAISA_COOKIE from secret
         env:
           TARGET_WORKSPACE_NAME: ${{ inputs.target_workspace_name }}
           MAISA_API_KEYS_JSON: ${{ secrets.maisa_api_keys_json || secrets.MAISA_API_KEYS_JSON }}
+          MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
         shell: bash
         run: |
           python - <<'PY'
           import json, os
 
-          ws  = os.environ.get("TARGET_WORKSPACE_NAME", "").strip()
-          raw = os.environ.get("MAISA_API_KEYS_JSON", "").strip()
+          direct = os.environ.get("MAISA_AUTH_CREDENTIAL", "").strip()
+          raw    = os.environ.get("MAISA_API_KEYS_JSON", "").strip()
 
-          if not ws or not raw:
-              raise SystemExit("❌ Missing TARGET_WORKSPACE_NAME or MAISA_API_KEYS_JSON.")
-
-          data   = json.loads(raw)
-          cookie = data.get(ws)
-          if not cookie:
-              raise SystemExit(f"❌ No cookie for '{ws}' in MAISA_API_KEYS_JSON.")
+          if direct and not raw:
+              cookie = direct
+          elif raw:
+              ws = os.environ.get("TARGET_WORKSPACE_NAME", "").strip()
+              if not ws:
+                  raise SystemExit("❌ TARGET_WORKSPACE_NAME is required when using MAISA_API_KEYS_JSON.")
+              try:
+                  data = json.loads(raw)
+              except Exception as e:
+                  raise SystemExit(f"❌ MAISA_API_KEYS_JSON is not valid JSON: {e}")
+              cookie = data.get(ws)
+              if not cookie:
+                  available = ", ".join(sorted(data.keys()))
+                  raise SystemExit(f"❌ No cookie found for '{ws}'. Available keys: {available}")
+          else:
+              raise SystemExit(
+                  "❌ No credential found. Set either:\n"
+                  "   MAISA_AUTH_CREDENTIAL  — full cookie string\n"
+                  "   MAISA_API_KEYS_JSON    — JSON map {\"workspace\": \"<cookie>\"}"
+              )
 
           print(f"::add-mask::{cookie}")
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
