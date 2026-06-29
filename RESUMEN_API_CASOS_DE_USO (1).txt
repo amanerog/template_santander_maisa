@@ -1,0 +1,160 @@
+https://cloud.ibm.com/docs/apis/openpages#get-grcobjectjson-by-id
+
+================================================================================
+  RESUMEN API OpenPages — Casos de Uso (ModelUseCase)
+================================================================================
+
+DATOS DE CONEXION
+-----------------
+  Base URL:     https://<INSTANCE_ID>.eu-de.openpages.cloud.ibm.com/grc/api
+  Instance ID:  94a9c3fd-21af-4f38-80d5-a059ddf0bc46
+  IAM URL:      https://iam.cloud.ibm.com/identity/token
+
+HEADERS (comunes a todas las llamadas excepto IAM)
+---------------------------------------------------
+  Authorization:          Bearer <TOKEN>
+  Content-Type:           application/json
+  Accept:                 application/json
+  ZEN-Service-Instance-Id: <INSTANCE_ID>
+
+
+================================================================================
+1. OBTENER TOKEN IAM
+================================================================================
+
+  POST https://iam.cloud.ibm.com/identity/token
+  Content-Type: application/x-www-form-urlencoded
+
+  Body (formulario, NO es JSON):
+    grant_type = urn:ibm:params:oauth:grant-type:apikey
+    apikey     = <tu IBM_API_KEY>
+
+  Es decir, el body es un string con dos parametros separados por &:
+    grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=TU_API_KEY
+
+  Ejemplo curl:
+    curl -X POST "https://iam.cloud.ibm.com/identity/token" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=TU_API_KEY"
+
+  Respuesta (JSON):
+    {
+      "access_token": "eyJhbGciOi...",    <-- este es el token que se usa
+      "token_type": "Bearer",
+      "expires_in": 3600                   <-- caduca en 1 hora
+    }
+
+
+================================================================================
+2. CREAR UN CASO DE USO
+================================================================================
+
+  POST /grc/api/contents
+
+  OBLIGATORIO para la API (lo minimo para que funcione):
+    - name                -> nombre del objeto
+    - typeDefinitionId    -> "94" (ModelUseCase)
+    - parentFolderId      -> "10263" (carpeta CIB)
+    - fields              -> puede estar vacio: {"field": []}
+
+  Body minimo (funciona sin ningun field):
+  {
+    "name": "Nombre del caso de uso",
+    "typeDefinitionId": "94",
+    "parentFolderId": "10263",
+    "fields": {"field": []}
+  }
+
+  Body completo (con campos recomendados por negocio):
+  {
+    "name": "Nombre del caso de uso",
+    "description": "Descripcion",
+    "typeDefinitionId": "94",
+    "parentFolderId": "10263",
+    "fields": {
+      "field": [
+        // External ID - identificador unico externo
+        { "id": "1396", "dataType": "STRING_TYPE",  "hasChanged": true, "value": "id-externo" },
+        // Santander Owner - email del responsable
+        { "id": "3261", "dataType": "STRING_TYPE",  "hasChanged": true, "value": "owner@dominio.com" },
+        // Country - pais
+        { "id": "3260", "dataType": "ENUM_TYPE",    "hasChanged": true, "enumValue": { "name": "ESP" } },
+        // Santander Purpose - proposito/finalidad
+        { "id": "3275", "dataType": "ENUM_TYPE",    "hasChanged": true, "enumValue": { "name": "AML - Transaction monitoring" } },
+        // Santander Risk Level - nivel de riesgo (High, Medium, Low)
+        { "id": "3266", "dataType": "ENUM_TYPE",    "hasChanged": true, "enumValue": { "name": "High" } },
+        // aux_Business Entity - entidad de negocio
+        { "id": "3365", "dataType": "ENUM_TYPE",    "hasChanged": true, "enumValue": { "name": "CIB" } },
+        // Application - siempre "Watson Knowledge Catalog"
+        { "id": "1395", "dataType": "ENUM_TYPE",    "hasChanged": true, "enumValue": { "name": "Watson Knowledge Catalog" } }
+      ]
+    }
+  }
+
+  Respuesta: devuelve el objeto creado con su "id".
+
+
+================================================================================
+3. ASOCIAR CON BUSINESS ENTITY (obligatorio tras crear)
+================================================================================
+
+  POST /grc/api/contents/<USE_CASE_ID>/associations
+
+  Body (IMPORTANTE: es un ARRAY):
+  [
+    {
+      "id": "10131",
+      "associationDefinitionId": "690",
+      "type": "PARENT"
+    }
+  ]
+
+  Valores:
+    id = 10131               -> Business Entity CIB
+    associationDefinitionId = 690  -> Relacion ModelUseCase <-> SOXBusEntity
+    type = PARENT            -> El Business Entity es padre del Use Case
+
+
+================================================================================
+4. MODIFICAR UN CASO DE USO EXISTENTE
+================================================================================
+
+  PUT /grc/api/contents/<USE_CASE_ID>
+
+  NOTA: "name" es OBLIGATORIO en el PUT aunque no se cambie.
+
+  Body:
+  {
+    "name": "Nombre actual del objeto",
+    "description": "Nueva descripcion",
+    "fields": {
+      "field": [
+        { "id": "3259", "dataType": "ENUM_TYPE",   "hasChanged": true, "enumValue": { "name": "Approved" } },
+        { "id": "3261", "dataType": "STRING_TYPE",  "hasChanged": true, "value": "nuevo.owner@dominio.com" }
+      ]
+    }
+  }
+
+
+================================================================================
+5. CONSULTAR UN CASO DE USO
+================================================================================
+
+  GET /grc/api/contents/<USE_CASE_ID>
+
+  Devuelve el objeto completo con todos sus campos.
+
+  GET /grc/api/contents/<USE_CASE_ID>/associations
+
+  Devuelve las asociaciones (parents/children) del objeto.
+
+
+================================================================================
+DOCUMENTACION Y REFERENCIAS
+================================================================================
+
+  Documentacion oficial (API Cloud):
+    https://cloud.ibm.com/apidocs/openpages
+
+  Autenticacion IAM (obtener token):
+    https://cloud.ibm.com/docs/account?topic=account-iamtoken_from_apikey
