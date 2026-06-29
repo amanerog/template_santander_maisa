@@ -1,5 +1,31 @@
 https://cloud.ibm.com/docs/apis/openpages#get-grcobjectjson-by-id
 
+1. Obtener token IAM
+
+- POST https://iam.cloud.ibm.com/identity/token
+- Autenticacion via API Key de IBM. Devuelve un access_token Bearer valido 1 hora.
+
+2. Crear un Caso de Uso
+
+- POST /grc/api/contents
+- Crea un nuevo objeto ModelUseCase en la carpeta CIB (parentFolderId: 10263).
+- Campos clave: nombre, descripcion, External ID, owner (email), pais, proposito, nivel de riesgo, business entity y aplicacion (Watson Knowledge Catalog).
+
+3. Asociar con Business Entity (paso obligatorio tras crear)
+
+- POST /grc/api/contents/<ID>/associations
+- Vincula el caso de uso a la Business Entity CIB (id: 10131) con relacion de tipo PARENT.
+
+4. Modificar un Caso de Uso existente
+
+- PUT /grc/api/contents/<ID>
+- Actualiza campos del objeto. El campo name es obligatorio aunque no cambie.
+
+5. Consultar un Caso de Uso
+
+- GET /grc/api/contents/<ID> — devuelve el objeto completo con todos sus campos.
+- GET /grc/api/contents/<ID>/associations — devuelve las asociaciones (padres/hijos).
+
 ================================================================================
   RESUMEN API OpenPages — Casos de Uso (ModelUseCase)
 ================================================================================
