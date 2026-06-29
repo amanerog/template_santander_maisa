@@ -16,3 +16,7 @@ RuntimeError: HTTP 401: {"status":"failed","error":{"kind":"UNAUTHENTICATED","me
 
 
 curl --location --request GET 'https://gppaas-maisa-plat.sgtech.pre.corp/maisa-bff/worker-manager/6a2fad0818ecbc197d3c1214' --header 'Cookie: maisa_pro_sidebar_state=true; maisaai-session-id=YOUR_SESSION_ID; AWSALBTG=YOUR_AWSALBTG; AWSALBTGCORS=YOUR_AWSALBTGCORS' --insecure
+
+curl --location --request GET 'https://gppaas-maisa-plat.sgtech.pre.corp/maisa-bff/executions/YOUR_EXEC_ID' \
+  --header 'Cookie: maisa_pro_sidebar_state=true; maisaai-session-id=YOUR_SESSION_ID; AWSALBTG=YOUR_AWSALBTG; AWSALBTGCORS=YOUR_AWSALBTGCORS' \
+  --insecure
