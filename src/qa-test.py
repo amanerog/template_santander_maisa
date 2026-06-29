@@ -14,6 +14,8 @@ Required env vars (post-import mode):
 
 Optional env vars:
   AUTH_TYPE               "cookie" (default) or "api_key"
+  TEST_WM_ID              Worker Manager ID to test directly — skips the name search.
+                          Use this when testing an already-deployed agent without importing.
 
 qa-dataset.json format:
 {
@@ -160,6 +162,14 @@ def load_dataset() -> dict:
         return json.load(f)
 
 
+def get_worker_manager_by_id(api: MaisaAPI, wm_id: str) -> Dict[str, Any]:
+    resp = api.get(f"/worker-manager/{wm_id}")
+    data = resp.get("data", resp) if isinstance(resp, dict) else resp
+    if not isinstance(data, dict) or not data.get("id"):
+        raise SystemExit(f"❌ Worker manager '{wm_id}' not found or returned unexpected response.")
+    return data
+
+
 def find_worker_manager(api: MaisaAPI, name: str, org_id: str, workspace_id: str) -> Dict[str, Any]:
     wm_list = api.get_paginated(f"/organizations/{org_id}/workspaces/{workspace_id}/worker-managers")
     name_lower = name.lower()
@@ -234,13 +244,23 @@ def main() -> None:
         raise SystemExit("❌ qa-dataset.json has no test cases")
 
     agent_name = dataset.get("agent_name", "").strip()
-    if not agent_name:
-        raise SystemExit("❌ 'agent_name' is required in qa-dataset.json")
 
     api = MaisaAPI(base_url=target_url, auth_credential=auth_credential, auth_type=auth_type)
 
-    print(f"🔍 Finding worker: {agent_name}")
-    wm = find_worker_manager(api, agent_name, org_id, workspace_id)
+    test_wm_id = os.environ.get("TEST_WM_ID", "").strip()
+
+    if test_wm_id:
+        print(f"🔍 Using provided Worker Manager ID: {test_wm_id}")
+        wm = get_worker_manager_by_id(api, test_wm_id)
+        agent_name = wm.get("name", test_wm_id)
+    else:
+        if not agent_name:
+            raise SystemExit("❌ 'agent_name' is required in qa-dataset.json when TEST_WM_ID is not set.")
+        if not org_id or not workspace_id:
+            raise SystemExit("❌ ORGANIZATION_ID and WORKSPACE_ID are required when TEST_WM_ID is not set.")
+        print(f"🔍 Finding worker by name: {agent_name}")
+        wm = find_worker_manager(api, agent_name, org_id, workspace_id)
+
     wm_id = wm.get("id", "")
     version_id = wm.get("lastVersionId") or wm.get("deployedVersionId") or ""
 
