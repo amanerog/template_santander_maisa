@@ -9,9 +9,6 @@ on:
       worker_id:
         description: "Worker version ID to export (lastVersionId from the worker manager)"
         required: true
-      worker_name:
-        description: "Name for the exported file (optional, defaults to worker_id)"
-        required: false
       workspace_name:
         description: "Folder name for Git storage (agents/<workspace_name>/...)"
         required: true
@@ -31,9 +28,6 @@ on:
         type: string
       worker_id:
         required: true
-        type: string
-      worker_name:
-        required: false
         type: string
       workspace_name:
         required: true
@@ -66,11 +60,6 @@ jobs:
         run: |
           echo "value=$(date -u +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -82,7 +71,6 @@ jobs:
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           AUTH_TYPE: ${{ inputs.auth_type }}
           WORKER_ID: ${{ inputs.worker_id }}
-          WORKER_NAME: ${{ inputs.worker_name }}
           WORKSPACE_NAME: ${{ inputs.workspace_name }}
           EXPORT_DIR: agents/${{ inputs.workspace_name }}/${{ steps.ts.outputs.value }}
         run: |
@@ -106,21 +94,11 @@ jobs:
                   headers["Cookie"] = auth_credential
               return headers
 
-          def safe_slug(s: str) -> str:
-              keep = []
-              for ch in (s or ""):
-                  if ch.isalnum() or ch in ("-", "_", "."):
-                      keep.append(ch)
-                  elif ch.isspace():
-                      keep.append("_")
-              return "".join(keep).strip("._-") or "agent"
-
           async def main():
               source_url = os.environ["SOURCE_URL"].strip()
               auth_credential = os.environ["MAISA_AUTH_CREDENTIAL"]
               auth_type = os.environ.get("AUTH_TYPE", "cookie")
               worker_id = os.environ["WORKER_ID"].strip()
-              worker_name = os.environ.get("WORKER_NAME", "").strip() or worker_id
               export_dir = Path(os.environ["EXPORT_DIR"])
 
               url = f"{source_url.rstrip('/')}/maisa-bff/workers/{worker_id}/export"
@@ -129,7 +107,6 @@ jobs:
               print(f"🔧 Maisa URL:  {source_url}")
               print(f"🔐 Auth type:  {auth_type}")
               print(f"🤖 Worker ID:  {worker_id}")
-              print(f"📛 Name:       {worker_name}")
               print(f"🌐 GET {url}")
               if safe_cookie:
                   print(f"   Cookie: {safe_cookie}")
@@ -147,7 +124,7 @@ jobs:
                   content = base64.b64encode(export_bytes).decode("utf-8") + "\n"
 
               export_dir.mkdir(parents=True, exist_ok=True)
-              filename = f"{safe_slug(worker_name)}__{worker_id}.b64"
+              filename = f"{worker_id}.b64"
               out_path = export_dir / filename
               out_path.write_text(content, encoding="utf-8")
 
