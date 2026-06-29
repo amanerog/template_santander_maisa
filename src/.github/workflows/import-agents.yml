@@ -10,8 +10,8 @@ on:
         description: "Workspace SOURCE in Git (folder agents/<workspace_name>/...)"
         required: true
       target_workspace_name:
-        description: "Key in MAISA_API_KEYS_JSON to resolve the cookie for the target"
-        required: true
+        description: "Label for the target workspace (informational only)"
+        required: false
       target_organization_id:
         description: "Target Maisa organization ID"
         required: true
@@ -53,7 +53,7 @@ on:
         required: true
         type: string
       target_workspace_name:
-        required: true
+        required: false
         type: string
       target_organization_id:
         required: true
@@ -79,7 +79,7 @@ on:
         required: false
         type: string
     secrets:
-      maisa_api_keys_json:
+      maisa_auth_credential:
         required: true
 
 permissions:
