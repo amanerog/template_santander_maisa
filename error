@@ -13,3 +13,6 @@ Traceback (most recent call last):
   File "/runnertmp/_work/sgt-ap11568-testmaisainte/sgt-ap11568-testmaisainte/scripts/qa-test.py", line 107, in _request
     raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:300]}")
 RuntimeError: HTTP 401: {"status":"failed","error":{"kind":"UNAUTHENTICATED","message":"authentication failed","errorId":"d3c7788e-c4b5-4c0e-bc2c-a797c891718f"}}
+
+
+curl --location --request GET 'https://gppaas-maisa-plat.sgtech.pre.corp/maisa-bff/worker-manager/6a2fad0818ecbc197d3c1214' --header 'Cookie: maisa_pro_sidebar_state=true; maisaai-session-id=YOUR_SESSION_ID; AWSALBTG=YOUR_AWSALBTG; AWSALBTGCORS=YOUR_AWSALBTGCORS' --insecure
