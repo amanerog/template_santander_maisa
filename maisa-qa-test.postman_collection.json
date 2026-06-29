@@ -1,0 +1,127 @@
+{
+  "info": {
+    "name": "Maisa QA Test — Worker Execution",
+    "description": "Reproduces exactly the API calls made by qa-test.py.\n\nSSL: Disable SSL verification in Postman Settings → General → SSL certificate verification → OFF.\n\nFill in the collection variables before running:\n  - base_url\n  - cookie      (full cookie string)\n  - wm_id       (Worker Manager ID, e.g. 6a2fad0818ecbc197d3c1214)\n  - version_id  (lastVersionId from step 1 response — copy it into this variable before running step 2+)\n  - exec_id     (executionId from step 2 response — copy it into this variable before running step 3)\n\nRun in order: 1 → 2 → 3",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://gppaas-maisa-plat.sgtech.pre.corp/maisa-bff",
+      "description": "Base URL including /maisa-bff path prefix"
+    },
+    {
+      "key": "cookie",
+      "value": "",
+      "description": "Full cookie string. E.g.: maisa_pro_sidebar_state=true; maisaai-session-id=...; AWSALBTG=...; AWSALBTGCORS=..."
+    },
+    {
+      "key": "wm_id",
+      "value": "6a2fad0818ecbc197d3c1214",
+      "description": "Worker Manager ID to test"
+    },
+    {
+      "key": "version_id",
+      "value": "",
+      "description": "lastVersionId from step 1 response — fill this in before running step 2"
+    },
+    {
+      "key": "exec_id",
+      "value": "",
+      "description": "executionId from step 2 response — fill this in before running step 3"
+    }
+  ],
+  "item": [
+    {
+      "name": "Step 1 — Get Worker Manager (verify cookie + wm_id)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Cookie", "value": "{{cookie}}" },
+          { "key": "User-Agent", "value": "Mozilla/5.0 (compatible; MaisaQATest/1.0)" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/worker-manager/{{wm_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["worker-manager", "{{wm_id}}"]
+        },
+        "description": "Corresponds to get_worker_manager_by_id() in qa-test.py.\n\nVerifies:\n  - Cookie is valid (401 = bad cookie)\n  - wm_id exists (404 = wrong ID)\n\nFrom the response, copy data.lastVersionId into the 'version_id' collection variable before running step 2."
+      },
+      "response": []
+    },
+    {
+      "name": "Step 2 — Run Worker (trigger execution)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Cookie", "value": "{{cookie}}" },
+          { "key": "User-Agent", "value": "Mozilla/5.0 (compatible; MaisaQATest/1.0)" },
+          { "key": "Content-Type", "value": "multipart/form-data" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "inputVariables",
+              "value": "[{\"name\": \"query\", \"value\": \"Hello, can you hear me?\"}]",
+              "type": "text",
+              "description": "JSON array of input variables. Matches qa-dataset.json test-1 input."
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/workers/{{version_id}}/run",
+          "host": ["{{base_url}}"],
+          "path": ["workers", "{{version_id}}", "run"]
+        },
+        "description": "Corresponds to run_worker() in qa-test.py — first path tried: /workers/{version_id}/run.\n\nIf this returns 404 or 500, try the fallback request 'Step 2b' below.\n\nFrom the response, copy data.executionId (or data.id) into the 'exec_id' collection variable before running step 3."
+      },
+      "response": []
+    },
+    {
+      "name": "Step 2b — Run Worker fallback (digital-worker path)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Cookie", "value": "{{cookie}}" },
+          { "key": "User-Agent", "value": "Mozilla/5.0 (compatible; MaisaQATest/1.0)" },
+          { "key": "Content-Type", "value": "multipart/form-data" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "inputVariables",
+              "value": "[{\"name\": \"query\", \"value\": \"Hello, can you hear me?\"}]",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/digital-worker/{{wm_id}}/run",
+          "host": ["{{base_url}}"],
+          "path": ["digital-worker", "{{wm_id}}", "run"]
+        },
+        "description": "Corresponds to run_worker() fallback path in qa-test.py: /digital-worker/{wm_id}/run.\n\nUse this if Step 2 fails. From the response, copy executionId into 'exec_id' before running step 3."
+      },
+      "response": []
+    },
+    {
+      "name": "Step 3 — Poll Execution Result",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Cookie", "value": "{{cookie}}" },
+          { "key": "User-Agent", "value": "Mozilla/5.0 (compatible; MaisaQATest/1.0)" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/executions/{{exec_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["executions", "{{exec_id}}"]
+        },
+        "description": "Corresponds to the polling loop in run_worker() in qa-test.py.\n\nRun this repeatedly until data.status is one of: completed, failed, error.\n\nThe result is in data.result. qa-test.py checks:\n  - match=not_empty  → result must not be empty\n  - match=contains   → expected string must appear in result\n  - match=exact      → result must equal expected string (case-insensitive)"
+      },
+      "response": []
+    }
+  ]
+}
