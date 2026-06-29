@@ -1,0 +1,23 @@
+Run if [ ! -f "scripts/qa-dataset.json" ]; then
+  if [ ! -f "scripts/qa-dataset.json" ]; then
+    echo "⚠️  scripts/qa-dataset.json not found. Skipping golden dataset tests."
+    exit 0
+  fi
+  echo "✅ Golden dataset found. Running QA tests against deployed agent..."
+  python scripts/qa-test.py
+  shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+  env:
+    TARGET_MAISA_COOKIE: ***
+    TARGET_MAISA_URL: https://gppaas-maisa-plat.sgtech.pre.corp/
+    MAISA_AUTH_CREDENTIAL: ***
+    AUTH_TYPE: cookie
+    ORGANIZATION_ID: 69c54eb67d39ad688fe95a85
+    WORKSPACE_ID: 69fb587f3ffc1e5e505a116a
+    WORKSPACE_NAME: test
+    SNAPSHOT: 
+    AGENT_ID: 
+    TEST_WM_ID: 6a2fad0818ecbc197d3c1214
+✅ Golden dataset found. Running QA tests against deployed agent...
+❌ Worker 'YOUR_WORKER_NAME_HERE' not found in workspace. Available: ['test', 'Worker prueba', 'Agente 1.1 - Worker 2 - Analista Cualitativo (M)', 'Agente 1.1 - Worker 2 - Analista Cualitativo', 'Agente 1.2 - Worker 5 - Generador Flash Grupo', 'Agente 1.1 - Worker 3 - Auditor', 'Agente 1.2 - Worker 4 - Grupo - Text Worker']
+🔍 Finding worker: YOUR_WORKER_NAME_HERE
+Error: Process completed with exit code 1.
