@@ -180,20 +180,11 @@ def find_worker_manager(api: MaisaAPI, name: str, org_id: str, workspace_id: str
     return match
 
 
-def run_worker(api: MaisaAPI, wm_id: str, version_id: str, input_variables: Dict[str, str]) -> str:
+def run_worker(api: MaisaAPI, version_id: str, input_variables: Dict[str, str]) -> str:
     ivars = [{"name": k, "value": v} for k, v in input_variables.items()]
     body, ct = _build_multipart({"inputVariables": json.dumps(ivars)})
 
-    resp = None
-    for path in [f"/workers/{version_id}/run", f"/digital-worker/{wm_id}/run"]:
-        try:
-            resp = api.post(path, body=body, content_type=ct)
-            break
-        except RuntimeError as e:
-            print(f"    ⚠️  {path} failed: {e}")
-
-    if resp is None:
-        raise RuntimeError("All run endpoints failed")
+    resp = api.post(f"/workers/{version_id}/run", body=body, content_type=ct)
 
     data = resp.get("data", resp) if isinstance(resp, dict) else resp
     exec_id = ""
@@ -287,7 +278,7 @@ def main() -> None:
         print(f"    Input    : {json.dumps(input_variables)[:120]}")
 
         try:
-            content = run_worker(api, wm_id, version_id, input_variables)
+            content = run_worker(api, version_id, input_variables)
             passed = check_response(content, test.get("expected", ""), test.get("match", "contains"))
             print(f"    Response : {content[:120]}")
             print(f"    Expected : {test.get('expected', '')} (match={test.get('match', 'contains')})")
