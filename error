@@ -1,23 +1,15 @@
 Run if [ ! -f "scripts/qa-dataset.json" ]; then
-  if [ ! -f "scripts/qa-dataset.json" ]; then
-    echo "⚠️  scripts/qa-dataset.json not found. Skipping golden dataset tests."
-    exit 0
-  fi
-  echo "✅ Golden dataset found. Running QA tests against deployed agent..."
-  python scripts/qa-test.py
-  shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-  env:
-    TARGET_MAISA_COOKIE: ***
-    TARGET_MAISA_URL: https://gppaas-maisa-plat.sgtech.pre.corp/
-    MAISA_AUTH_CREDENTIAL: ***
-    AUTH_TYPE: cookie
-    ORGANIZATION_ID: 69c54eb67d39ad688fe95a85
-    WORKSPACE_ID: 69fb587f3ffc1e5e505a116a
-    WORKSPACE_NAME: test
-    SNAPSHOT: 
-    AGENT_ID: 
-    TEST_WM_ID: 6a2fad0818ecbc197d3c1214
 ✅ Golden dataset found. Running QA tests against deployed agent...
-❌ Worker 'YOUR_WORKER_NAME_HERE' not found in workspace. Available: ['test', 'Worker prueba', 'Agente 1.1 - Worker 2 - Analista Cualitativo (M)', 'Agente 1.1 - Worker 2 - Analista Cualitativo', 'Agente 1.2 - Worker 5 - Generador Flash Grupo', 'Agente 1.1 - Worker 3 - Auditor', 'Agente 1.2 - Worker 4 - Grupo - Text Worker']
-🔍 Finding worker: YOUR_WORKER_NAME_HERE
-Error: Process completed with exit code 1.
+🔍 Using provided Worker Manager ID: 6a2fad0818ecbc197d3c1214
+Traceback (most recent call last):
+  File "/runnertmp/_work/sgt-ap11568-testmaisainte/sgt-ap11568-testmaisainte/scripts/qa-test.py", line 314, in <module>
+    main()
+  File "/runnertmp/_work/sgt-ap11568-testmaisainte/sgt-ap11568-testmaisainte/scripts/qa-test.py", line 254, in main
+    wm = get_worker_manager_by_id(api, test_wm_id)
+  File "/runnertmp/_work/sgt-ap11568-testmaisainte/sgt-ap11568-testmaisainte/scripts/qa-test.py", line 166, in get_worker_manager_by_id
+    resp = api.get(f"/worker-manager/{wm_id}")
+  File "/runnertmp/_work/sgt-ap11568-testmaisainte/sgt-ap11568-testmaisainte/scripts/qa-test.py", line 114, in get
+    return self._request("GET", path, **kw)
+  File "/runnertmp/_work/sgt-ap11568-testmaisainte/sgt-ap11568-testmaisainte/scripts/qa-test.py", line 107, in _request
+    raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:300]}")
+RuntimeError: HTTP 401: {"status":"failed","error":{"kind":"UNAUTHENTICATED","message":"authentication failed","errorId":"d3c7788e-c4b5-4c0e-bc2c-a797c891718f"}}
