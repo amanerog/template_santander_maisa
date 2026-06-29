@@ -146,49 +146,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install httpx
 
-      - name: Resolve TARGET_MAISA_COOKIE from JSON secret
-        env:
-          TARGET_WORKSPACE_NAME: ${{ inputs.target_workspace_name }}
-          MAISA_API_KEYS_JSON: ${{ secrets.maisa_api_keys_json || secrets.MAISA_API_KEYS_JSON }}
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json, os
-
-          ws = os.environ.get("TARGET_WORKSPACE_NAME", "").strip()
-          raw = os.environ.get("MAISA_API_KEYS_JSON", "").strip()
-
-          if not ws:
-              raise SystemExit("❌ Missing target_workspace_name.")
-
-          if not raw:
-              raise SystemExit(
-                  "❌ Missing JSON secret. Define MAISA_API_KEYS_JSON as "
-                  "{\"workspace_name\": \"<full_cookie_string>\", ...}"
-              )
-
-          try:
-              data = json.loads(raw)
-          except Exception as e:
-              raise SystemExit(f"❌ MAISA_API_KEYS_JSON is not valid JSON: {e}")
-
-          if not isinstance(data, dict):
-              raise SystemExit("❌ MAISA_API_KEYS_JSON must be a JSON object.")
-
-          cookie = data.get(ws)
-          if not cookie:
-              available = ", ".join(sorted(data.keys()))
-              raise SystemExit(f"❌ No cookie found for '{ws}'. Available keys: {available}")
-
-          print(f"::add-mask::{cookie}")
-          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
-              f.write(f"TARGET_MAISA_COOKIE={cookie}\n")
-          PY
-
       - name: Import agents from Git snapshot
         env:
           TARGET_MAISA_URL: ${{ inputs.target_url }}
-          TARGET_MAISA_COOKIE: ${{ env.TARGET_MAISA_COOKIE }}
+          TARGET_MAISA_COOKIE: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           TARGET_ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           TARGET_WORKSPACE_ID: ${{ inputs.target_workspace_id }}
           WORKSPACE_NAME: ${{ inputs.workspace_name }}
@@ -453,49 +414,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install httpx
 
-      - name: Resolve TARGET_MAISA_COOKIE from secret
-        env:
-          TARGET_WORKSPACE_NAME: ${{ inputs.target_workspace_name }}
-          MAISA_API_KEYS_JSON: ${{ secrets.maisa_api_keys_json || secrets.MAISA_API_KEYS_JSON }}
-          MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json, os
-
-          direct = os.environ.get("MAISA_AUTH_CREDENTIAL", "").strip()
-          raw    = os.environ.get("MAISA_API_KEYS_JSON", "").strip()
-
-          if direct and not raw:
-              cookie = direct
-          elif raw:
-              ws = os.environ.get("TARGET_WORKSPACE_NAME", "").strip()
-              if not ws:
-                  raise SystemExit("❌ TARGET_WORKSPACE_NAME is required when using MAISA_API_KEYS_JSON.")
-              try:
-                  data = json.loads(raw)
-              except Exception as e:
-                  raise SystemExit(f"❌ MAISA_API_KEYS_JSON is not valid JSON: {e}")
-              cookie = data.get(ws)
-              if not cookie:
-                  available = ", ".join(sorted(data.keys()))
-                  raise SystemExit(f"❌ No cookie found for '{ws}'. Available keys: {available}")
-          else:
-              raise SystemExit(
-                  "❌ No credential found. Set either:\n"
-                  "   MAISA_AUTH_CREDENTIAL  — full cookie string\n"
-                  "   MAISA_API_KEYS_JSON    — JSON map {\"workspace\": \"<cookie>\"}"
-              )
-
-          print(f"::add-mask::{cookie}")
-          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
-              f.write(f"TARGET_MAISA_COOKIE={cookie}\n")
-          PY
-
       - name: Run QA golden dataset tests
         env:
           TARGET_MAISA_URL: ${{ inputs.target_url }}
-          MAISA_AUTH_CREDENTIAL: ${{ env.TARGET_MAISA_COOKIE }}
+          MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           AUTH_TYPE: cookie
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}
@@ -527,7 +449,7 @@ jobs:
         if: steps.check-post-import.outputs.exists == 'true'
         env:
           TARGET_MAISA_URL: ${{ inputs.target_url }}
-          MAISA_AUTH_CREDENTIAL: ${{ env.TARGET_MAISA_COOKIE }}
+          MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           AUTH_TYPE: cookie
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}
