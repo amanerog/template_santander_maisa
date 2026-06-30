@@ -2,6 +2,8 @@ https://cloud.ibm.com/docs/apis/openpages#get-grcobjectjson-by-id
 
 https://eu-de.aiopenscale.cloud.ibm.com/openscale/7b6cdbc1-0d37-4990-9fd0-0110f0c50c4a/v2/data_sets/019dd3ac-2962-77c4-a826-fb72600dd272/records?header=false&skip=0
 
+https://santander-auron-pre.eu-de.openpages.cloud.ibm.com/grc/api/contents/32758
+
 1. Obtener token IAM
 
 - POST https://iam.cloud.ibm.com/identity/token
