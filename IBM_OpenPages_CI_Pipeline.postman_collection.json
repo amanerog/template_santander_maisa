@@ -1,0 +1,255 @@
+{
+  "info": {
+    "name": "IBM OpenPages — CI Pipeline (Steps 4 & 5)",
+    "description": "Llamadas de CI/CD para modificar y consultar Casos de Uso (ModelUseCase) en IBM OpenPages. Incluye obtención de token IAM automática.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "INSTANCE_ID",
+      "value": "94a9c3fd-21af-4f38-80d5-a059ddf0bc46",
+      "type": "string"
+    },
+    {
+      "key": "BASE_URL",
+      "value": "https://94a9c3fd-21af-4f38-80d5-a059ddf0bc46.eu-de.openpages.cloud.ibm.com/grc/api",
+      "type": "string"
+    },
+    {
+      "key": "IAM_URL",
+      "value": "https://iam.cloud.ibm.com/identity/token",
+      "type": "string"
+    },
+    {
+      "key": "IBM_API_KEY",
+      "value": "<TU_IBM_API_KEY>",
+      "type": "string"
+    },
+    {
+      "key": "TOKEN",
+      "value": "",
+      "type": "string",
+      "description": "Se rellena automáticamente tras ejecutar 'Obtener Token IAM'"
+    },
+    {
+      "key": "USE_CASE_ID",
+      "value": "<ID_DEL_CASO_DE_USO>",
+      "type": "string",
+      "description": "ID numérico del objeto ModelUseCase a modificar/consultar"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Obtener Token IAM",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var json = pm.response.json();",
+              "if (json.access_token) {",
+              "    pm.collectionVariables.set('TOKEN', json.access_token);",
+              "    console.log('Token IAM obtenido y guardado en variable TOKEN');",
+              "} else {",
+              "    console.error('No se pudo obtener el token. Respuesta:', JSON.stringify(json));",
+              "}",
+              "",
+              "pm.test('Status 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('access_token presente en respuesta', function () {",
+              "    pm.expect(json).to.have.property('access_token');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "urn:ibm:params:oauth:grant-type:apikey",
+              "type": "text"
+            },
+            {
+              "key": "apikey",
+              "value": "{{IBM_API_KEY}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{IAM_URL}}",
+          "host": ["{{IAM_URL}}"]
+        },
+        "description": "Obtiene el Bearer token de IBM IAM usando la API Key. El token se guarda automáticamente en la variable de colección TOKEN (válido 1 hora)."
+      }
+    },
+    {
+      "name": "4. Modificar Caso de Uso",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Respuesta contiene id del objeto', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property('id');",
+              "});",
+              "pm.test('Content-Type es application/json', function () {",
+              "    pm.response.to.have.header('Content-Type');",
+              "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{TOKEN}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "ZEN-Service-Instance-Id",
+            "value": "{{INSTANCE_ID}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Nombre actual del caso de uso\",\n  \"description\": \"Descripción actualizada desde CI/CD pipeline\",\n  \"fields\": {\n    \"field\": [\n      {\n        \"id\": \"3259\",\n        \"dataType\": \"ENUM_TYPE\",\n        \"hasChanged\": true,\n        \"enumValue\": { \"name\": \"Approved\" }\n      },\n      {\n        \"id\": \"3261\",\n        \"dataType\": \"STRING_TYPE\",\n        \"hasChanged\": true,\n        \"value\": \"owner@dominio.com\"\n      },\n      {\n        \"id\": \"3266\",\n        \"dataType\": \"ENUM_TYPE\",\n        \"hasChanged\": true,\n        \"enumValue\": { \"name\": \"High\" }\n      }\n    ]\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/contents/{{USE_CASE_ID}}",
+          "host": ["{{BASE_URL}}"],
+          "path": ["contents", "{{USE_CASE_ID}}"]
+        },
+        "description": "Modifica un Caso de Uso existente. El campo 'name' es OBLIGATORIO aunque no cambie. Ajusta los campos del body según lo que quieras actualizar."
+      }
+    },
+    {
+      "name": "5a. Consultar Caso de Uso",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Respuesta contiene id del objeto', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property('id');",
+              "    pm.expect(json.id.toString()).to.equal(pm.collectionVariables.get('USE_CASE_ID'));",
+              "});",
+              "pm.test('Respuesta contiene campos (fields)', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property('fields');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{TOKEN}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "ZEN-Service-Instance-Id",
+            "value": "{{INSTANCE_ID}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/contents/{{USE_CASE_ID}}",
+          "host": ["{{BASE_URL}}"],
+          "path": ["contents", "{{USE_CASE_ID}}"]
+        },
+        "description": "Devuelve el objeto ModelUseCase completo con todos sus campos. Útil para verificar el estado tras una modificación."
+      }
+    },
+    {
+      "name": "5b. Consultar Asociaciones del Caso de Uso",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Respuesta es un array de asociaciones', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.be.an('array');",
+              "});",
+              "pm.test('Existe asociación con Business Entity CIB (id 10131)', function () {",
+              "    var json = pm.response.json();",
+              "    var cibAssoc = json.find(function(a) { return a.id && a.id.toString() === '10131'; });",
+              "    pm.expect(cibAssoc).to.not.be.undefined;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{TOKEN}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "ZEN-Service-Instance-Id",
+            "value": "{{INSTANCE_ID}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/contents/{{USE_CASE_ID}}/associations",
+          "host": ["{{BASE_URL}}"],
+          "path": ["contents", "{{USE_CASE_ID}}", "associations"]
+        },
+        "description": "Devuelve las asociaciones (padres/hijos) del objeto. Incluye test que verifica que sigue asociado a la Business Entity CIB (id 10131)."
+      }
+    }
+  ]
+}
