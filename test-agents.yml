@@ -1,0 +1,95 @@
+name: Test Maisa Agents
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Target Maisa URL (e.g. https://gppaas-maisa-plat.sgtech.pre.corp)"
+        required: true
+      test_wm_id:
+        description: "Worker Manager ID of the agent to test"
+        required: true
+      target_organization_id:
+        description: "Target Maisa organization ID (only needed when finding agent by name)"
+        required: false
+      target_workspace_id:
+        description: "Target Maisa workspace ID (only needed when finding agent by name)"
+        required: false
+
+  workflow_call:
+    inputs:
+      target_url:
+        required: true
+        type: string
+      test_wm_id:
+        required: true
+        type: string
+      target_organization_id:
+        required: false
+        type: string
+      target_workspace_id:
+        required: false
+        type: string
+    secrets:
+      maisa_auth_credential:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-agents:
+    name: Test agents
+    runs-on: base-runner
+
+    steps:
+      - name: Checkout development branch (read scripts and dataset)
+        uses: actions/checkout@v4
+        with:
+          ref: development
+          fetch-depth: 1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install httpx
+
+      - name: Run QA tests
+        env:
+          TARGET_MAISA_URL: ${{ inputs.target_url }}
+          MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
+          AUTH_TYPE: cookie
+          ORGANIZATION_ID: ${{ inputs.target_organization_id }}
+          WORKSPACE_ID: ${{ inputs.target_workspace_id }}
+          TEST_WM_ID: ${{ inputs.test_wm_id }}
+        shell: bash
+        run: |
+          if [ ! -f "scripts/qa-dataset.json" ]; then
+            echo "❌ scripts/qa-dataset.json not found. Failing pipeline."
+            exit 1
+          fi
+          echo "✅ Running QA tests against agent ${{ inputs.test_wm_id }}..."
+          python scripts/qa-test.py
+
+      - name: Check if post-import script exists
+        id: check-post-import
+        shell: bash
+        run: |
+          if [ ! -f "scripts/post_import.py" ]; then
+            echo "⚠️  scripts/post_import.py not found. Skipping."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          else
+            echo "exists=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run post-import script
+        if: steps.check-post-import.outputs.exists == 'true'
+        env:
+          TARGET_MAISA_URL: ${{ inputs.target_url }}
+          MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
+          AUTH_TYPE: cookie
+          ORGANIZATION_ID: ${{ inputs.target_organization_id }}
+          WORKSPACE_ID: ${{ inputs.target_workspace_id }}
+          TEST_WM_ID: ${{ inputs.test_wm_id }}
+        run: |
+          python scripts/post_import.py
