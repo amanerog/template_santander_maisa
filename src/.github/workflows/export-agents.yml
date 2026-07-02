@@ -124,7 +124,7 @@ jobs:
                   content = base64.b64encode(export_bytes).decode("utf-8") + "\n"
 
               export_dir.mkdir(parents=True, exist_ok=True)
-              filename = f"{worker_id}.b64"
+              filename = f"{worker_id}.mai"
               out_path = export_dir / filename
               out_path.write_text(content, encoding="utf-8")
 
@@ -146,5 +146,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "chore(maisa): export agent ${{ inputs.worker_id }} to agents/${{ inputs.workspace_name }}/${{ steps.ts.outputs.value }} (run ${{ github.run_id }})"
+          git commit -m "chore(maisa): export agent ${{ inputs.worker_id }} (.mai) to agents/${{ inputs.workspace_name }}/${{ steps.ts.outputs.value }} (run ${{ github.run_id }})"
           git push origin HEAD:feature/export-data
