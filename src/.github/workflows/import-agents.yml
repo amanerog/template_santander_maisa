@@ -9,9 +9,6 @@ on:
       workspace_name:
         description: "Workspace SOURCE in Git (folder agents/<workspace_name>/...)"
         required: true
-      target_workspace_name:
-        description: "Label for the target workspace (informational only)"
-        required: false
       target_organization_id:
         description: "Target Maisa organization ID"
         required: true
@@ -22,7 +19,7 @@ on:
         description: "Snapshot folder (YYYYMMDD-HHMMSS). Empty = latest"
         required: false
       mode:
-        description: "Import mode: all = import all agents, single = import one by id"
+        description: "all = import all agents, single = import one by id"
         required: false
         default: "all"
         type: choice
@@ -30,10 +27,21 @@ on:
           - "all"
           - "single"
       agent_id:
-        description: "Agent id (only if mode=single). It's the wm_id part of the .b64 filename"
+        description: "Agent id (only if mode=single). It's the wm_id part of the .mai filename"
+        required: false
+      import_mode:
+        description: "new_worker = new worker in workspace; new_version = new version of existing worker"
+        required: false
+        default: "new_worker"
+        type: choice
+        options:
+          - "new_worker"
+          - "new_version"
+      target_wm_id:
+        description: "Worker Manager ID to create a new version of (only if import_mode=new_version)"
         required: false
       skip_import:
-        description: "Skip the import step and test an already-deployed agent instead"
+        description: "Skip import and test an already-deployed agent instead"
         required: false
         default: "false"
         type: choice
@@ -41,7 +49,7 @@ on:
           - "false"
           - "true"
       test_wm_id:
-        description: "Worker Manager ID of the already-deployed agent to test (required when skip_import=true)"
+        description: "Worker Manager ID to test directly (required when skip_import=true)"
         required: false
 
   workflow_call:
@@ -51,9 +59,6 @@ on:
         type: string
       workspace_name:
         required: true
-        type: string
-      target_workspace_name:
-        required: false
         type: string
       target_organization_id:
         required: true
@@ -69,6 +74,13 @@ on:
         type: string
         default: "all"
       agent_id:
+        required: false
+        type: string
+      import_mode:
+        required: false
+        type: string
+        default: "new_worker"
+      target_wm_id:
         required: false
         type: string
       skip_import:
@@ -94,12 +106,11 @@ jobs:
     runs-on: base-runner
 
     steps:
-      - name: Checkout main branch (read scripts)
+      - name: Checkout development branch (read scripts)
         uses: actions/checkout@v4
         with:
           ref: development
           fetch-depth: 1
-
 
       - name: Run QA test script (must print OK)
         shell: bash
@@ -112,7 +123,6 @@ jobs:
           fi
 
           echo "✅ QA test script found. Running pre-check (no credentials)..."
-
           OUT="$(python scripts/qa-test.py | tee /dev/stderr)"
 
           if ! echo "$OUT" | grep -q "OK"; then
@@ -124,14 +134,15 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # JOB 2: Import agents from Git snapshot into Maisa
-  # Skipped when skip_import=true — the post-import job will test the agent
-  # specified by test_wm_id in the origin environment instead.
+  # Skipped when skip_import=true.
   # ---------------------------------------------------------------------------
   import-agents:
     name: Import agents
     runs-on: base-runner
     needs: qa-test
     if: inputs.skip_import != 'true'
+    outputs:
+      imported_wm_id: ${{ steps.import.outputs.imported_wm_id }}
 
     steps:
       - name: Checkout export branch (read exports)
@@ -140,13 +151,13 @@ jobs:
           ref: feature/export-data
           fetch-depth: 1
 
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install httpx
 
       - name: Import agents from Git snapshot
+        id: import
         env:
           TARGET_MAISA_URL: ${{ inputs.target_url }}
           TARGET_MAISA_COOKIE: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
@@ -156,100 +167,26 @@ jobs:
           SNAPSHOT: ${{ inputs.snapshot }}
           MODE: ${{ inputs.mode }}
           AGENT_ID: ${{ inputs.agent_id }}
+          IMPORT_MODE: ${{ inputs.import_mode }}
+          TARGET_WM_ID: ${{ inputs.target_wm_id }}
         run: |
           python << 'EOF'
           import asyncio
-          import base64
-          import json
           import os
-          import tempfile
-          from dataclasses import dataclass, field
           from pathlib import Path
-          from typing import Any, Dict, List, Optional
+          from typing import Any, Dict, List
           import httpx
 
           TIMEOUT = 120
 
-          @dataclass
-          class MaisaAPI:
-              base_url: str
-              cookie: str
+          def headers(cookie: str) -> Dict[str, str]:
+              return {
+                  "Cookie": cookie,
+                  "User-Agent": "Mozilla/5.0 (compatible; MaisaImporter/1.0)",
+              }
 
-              def _headers(self) -> Dict[str, str]:
-                  return {
-                      "Cookie": self.cookie,
-                      "User-Agent": "Mozilla/5.0 (compatible; MaisaImporter/1.0)",
-                  }
-
-              def _url(self, path: str) -> str:
-                  return f"{self.base_url.rstrip('/')}/maisa-bff{path}"
-
-              async def _request(
-                  self,
-                  method: str,
-                  path: str,
-                  *,
-                  json_body: Optional[Any] = None,
-                  content_type: Optional[str] = None,
-                  body: Optional[bytes] = None,
-              ) -> Any:
-                  url = self._url(path)
-                  while True:
-                      async with httpx.AsyncClient(timeout=TIMEOUT, verify=False, follow_redirects=True) as client:
-                          headers = self._headers()
-                          if content_type:
-                              headers["Content-Type"] = content_type
-                          elif json_body is not None:
-                              headers["Content-Type"] = "application/json"
-                          kwargs: Dict[str, Any] = {"headers": headers}
-                          if json_body is not None:
-                              kwargs["json"] = json_body
-                          if body is not None:
-                              kwargs["content"] = body
-                          resp = await client.request(method, url, **kwargs)
-                          if resp.status_code == 429:
-                              print("  ⏳ Rate limited, waiting 2s...")
-                              await asyncio.sleep(2)
-                              continue
-                          if resp.status_code >= 400:
-                              raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:300]}")
-                          if not resp.content:
-                              return None
-                          return resp.json()
-
-              async def post(self, path: str, **kw: Any) -> Any:
-                  return await self._request("POST", path, **kw)
-
-          # ── .b64 → .mai conversion ────────────────────────────────────────────
-
-          def b64_file_to_mai(b64_path: Path, mai_path: Path) -> None:
-              """
-              Read a .b64 export file and write it as a .mai file.
-
-              The .b64 file contains either:
-                - Raw UTF-8 content from the Maisa export endpoint (saved as-is)
-                - A base64-encoded binary blob (when the export was not valid UTF-8)
-
-              The .mai file is the native Maisa import format — it holds the same
-              content that the export endpoint originally returned.
-              """
-              raw = b64_path.read_text(encoding="utf-8").strip()
-
-              # Try to detect if the content is itself base64-encoded binary
-              try:
-                  decoded_bytes = base64.b64decode(raw)
-                  # Check if the decoded bytes look like JSON (Maisa export format)
-                  decoded_text = decoded_bytes.decode("utf-8")
-                  json.loads(decoded_text)
-                  # It was base64-encoded JSON → write the decoded text as .mai
-                  mai_path.write_text(decoded_text, encoding="utf-8")
-                  print(f"    ↳ Decoded base64 → JSON → {mai_path.name}")
-              except Exception:
-                  # Content is already the raw export text (JSON or other format)
-                  mai_path.write_text(raw, encoding="utf-8")
-                  print(f"    ↳ Raw text → {mai_path.name}")
-
-          # ── Snapshot resolution ───────────────────────────────────────────────
+          def api_url(base_url: str, path: str) -> str:
+              return f"{base_url.rstrip('/')}/maisa-bff{path}"
 
           def pick_snapshot_dir(base_dir: Path, snapshot: str) -> Path:
               if snapshot:
@@ -266,131 +203,137 @@ jobs:
               parts = p.stem.split("__")
               return parts[-1] if len(parts) >= 2 else p.stem
 
-          # ── Import function (API call) ─────────────────────────────────────────
+          def extract_wm_id(resp: Any) -> str:
+              if not isinstance(resp, dict):
+                  return ""
+              data = resp.get("data", resp)
+              if not isinstance(data, dict):
+                  return ""
+              return (
+                  data.get("workerManagerId") or
+                  data.get("id") or
+                  data.get("workerId") or
+                  ""
+              )
 
-          async def import_agent(api: MaisaAPI, org_id: str, ws_id: str, mai_path: Path) -> Any:
-              """
-              TODO: Import API specification not yet available.
+          async def import_agent(
+              base_url: str,
+              cookie: str,
+              org_id: str,
+              ws_id: str,
+              mai_path: Path,
+              import_mode: str,
+              target_wm_id: str,
+          ) -> Any:
+              file_bytes = mai_path.read_bytes()
 
-              Once the Maisa import endpoint is documented, implement the call here.
-              Expected pattern (subject to change):
-                POST /maisa-bff/organizations/{org_id}/workspaces/{ws_id}/workers/import
-                Body: multipart or JSON with the .mai file content
+              if import_mode == "new_version":
+                  url = api_url(base_url, f"/workers/{target_wm_id}/import")
+                  params = {"mode": "newVersion"}
+                  form_data = {}
+                  print(f"    📤 POST {url}?mode=newVersion")
+              else:
+                  url = api_url(base_url, f"/organizations/{org_id}/workspaces/{ws_id}/workers/import")
+                  params = {}
+                  form_data = {"workspaceId": ws_id}
+                  print(f"    📤 POST {url}")
 
-              For now this function is a no-op placeholder that logs what would be sent.
-              """
-              mai_content = mai_path.read_text(encoding="utf-8")
-              print(f"    ⚠️  [IMPORT API NOT IMPLEMENTED] Would POST .mai content ({len(mai_content)} chars)")
-              print(f"       Target org:       {org_id}")
-              print(f"       Target workspace: {ws_id}")
-              print(f"       File:             {mai_path.name}")
-              # ----------------------------------------------------------------
-              # Uncomment and adapt when the import API spec is available:
-              #
-              # return await api.post(
-              #     f"/organizations/{org_id}/workspaces/{ws_id}/workers/import",
-              #     json_body={"definition": mai_content},
-              # )
-              # ----------------------------------------------------------------
-              return None
+              print(f"       File: {mai_path.name} ({len(file_bytes)} bytes)")
 
-          # ── Main ──────────────────────────────────────────────────────────────
-
-          @dataclass
-          class ImportResult:
-              imported: List[Dict[str, Any]] = field(default_factory=list)
-              errors: List[str] = field(default_factory=list)
+              async with httpx.AsyncClient(timeout=TIMEOUT, verify=False, follow_redirects=True) as client:
+                  resp = await client.post(
+                      url,
+                      headers=headers(cookie),
+                      files={"file": (mai_path.name, file_bytes, "application/octet-stream")},
+                      data=form_data,
+                      params=params,
+                  )
+              if resp.status_code >= 400:
+                  raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:300]}")
+              return resp.json() if resp.content else None
 
           async def main():
-              target_url  = os.environ["TARGET_MAISA_URL"].strip()
-              cookie      = os.environ["TARGET_MAISA_COOKIE"]
-              org_id      = os.environ["TARGET_ORGANIZATION_ID"].strip()
-              ws_id       = os.environ["TARGET_WORKSPACE_ID"].strip()
-              workspace   = os.environ["WORKSPACE_NAME"].strip()
-              snapshot    = os.environ.get("SNAPSHOT", "").strip()
-              mode        = os.environ.get("MODE", "all").strip()
-              agent_id    = os.environ.get("AGENT_ID", "").strip()
+              base_url     = os.environ["TARGET_MAISA_URL"].strip()
+              cookie       = os.environ["TARGET_MAISA_COOKIE"]
+              org_id       = os.environ["TARGET_ORGANIZATION_ID"].strip()
+              ws_id        = os.environ["TARGET_WORKSPACE_ID"].strip()
+              workspace    = os.environ["WORKSPACE_NAME"].strip()
+              snapshot     = os.environ.get("SNAPSHOT", "").strip()
+              mode         = os.environ.get("MODE", "all").strip()
+              agent_id     = os.environ.get("AGENT_ID", "").strip()
+              import_mode  = os.environ.get("IMPORT_MODE", "new_worker").strip()
+              target_wm_id = os.environ.get("TARGET_WM_ID", "").strip()
 
               if mode not in ("all", "single"):
                   raise SystemExit(f"❌ Invalid mode: {mode}")
               if mode == "single" and not agent_id:
                   raise SystemExit("❌ mode=single requires agent_id")
+              if import_mode not in ("new_worker", "new_version"):
+                  raise SystemExit(f"❌ Invalid import_mode: {import_mode}")
+              if import_mode == "new_version" and not target_wm_id:
+                  raise SystemExit("❌ import_mode=new_version requires target_wm_id")
 
               base_dir = Path("agents") / workspace
               if not base_dir.exists():
                   raise SystemExit(f"❌ Workspace folder not found: {base_dir}")
 
               snapshot_dir = pick_snapshot_dir(base_dir, snapshot)
-              print(f"📦 Using snapshot: {snapshot_dir}")
-
-              files = sorted(snapshot_dir.glob("*.b64"))
+              files = sorted(snapshot_dir.glob("*.mai"))
               if mode == "single":
                   files = [p for p in files if filename_agent_id(p) == agent_id]
                   if not files:
-                      raise SystemExit(f"❌ No .b64 file found for agent_id={agent_id} in {snapshot_dir}")
-
-              print(f"⚙️  Found {len(files)} file(s) to import")
-
-              api    = MaisaAPI(base_url=target_url, cookie=cookie)
-              result = ImportResult()
+                      raise SystemExit(f"❌ No .mai file found for agent_id={agent_id} in {snapshot_dir}")
 
               print("=" * 60)
-              print("Maisa Agent Import (from Git)")
+              print("Maisa Agent Import")
               print("=" * 60)
-              print(f"Target URL:       {target_url}")
-              print(f"Organization ID:  {org_id}")
-              print(f"Workspace ID:     {ws_id}")
-              print(f"Git folder:       {workspace}")
-              print(f"Snapshot:         {snapshot_dir.name}")
-              print(f"Mode:             {mode}")
+              print(f"Target URL:    {base_url}")
+              print(f"Org ID:        {org_id}")
+              print(f"Workspace ID:  {ws_id}")
+              print(f"Git folder:    {workspace}")
+              print(f"Snapshot:      {snapshot_dir.name}")
+              print(f"Mode:          {mode} / {import_mode}")
+              print(f"Files:         {len(files)}")
               print("=" * 60)
 
-              with tempfile.TemporaryDirectory() as tmp:
-                  tmp_dir = Path(tmp)
+              errors: List[str] = []
+              last_wm_id = target_wm_id if import_mode == "new_version" else ""
 
-                  for p in files:
-                      agent_id_in_file = filename_agent_id(p)
-                      print(f"\n  File: {p.name}")
+              for p in files:
+                  print(f"\n  File: {p.name}")
+                  try:
+                      resp = await import_agent(base_url, cookie, org_id, ws_id, p, import_mode, target_wm_id)
+                      print(f"    📋 Response: {str(resp)[:300]}")
 
-                      # Step 1: convert .b64 → .mai
-                      mai_path = tmp_dir / p.with_suffix(".mai").name
-                      try:
-                          b64_file_to_mai(p, mai_path)
-                      except Exception as e:
-                          msg = f"File '{p.name}': conversion failed: {e}"
-                          result.errors.append(msg)
-                          print(f"    ❌ {msg}")
-                          continue
+                      wm_id = extract_wm_id(resp) or last_wm_id
+                      if wm_id:
+                          last_wm_id = wm_id
+                          print(f"    🤖 WM ID: {wm_id}")
 
-                      # Step 2: call import API
-                      try:
-                          resp = await import_agent(api, org_id, ws_id, mai_path)
-                          print(f"    ✅ Import submitted for {p.name}")
-                          result.imported.append({"file": p.name, "agent_id": agent_id_in_file, "response": str(resp)})
-                      except Exception as e:
-                          msg = f"File '{p.name}': import API call failed: {e}"
-                          result.errors.append(msg)
-                          print(f"    ❌ {msg}")
+                      print(f"    ✅ Done")
+                  except Exception as e:
+                      errors.append(f"{p.name}: {e}")
+                      print(f"    ❌ {e}")
 
               print("\n" + "=" * 60)
-              print("Import Summary")
-              print("=" * 60)
-              print(f"  Processed: {len(files)}")
-              print(f"  Submitted: {len(result.imported)}")
-              if result.errors:
-                  print(f"\n  ❌ Errors ({len(result.errors)}):")
-                  for err in result.errors:
-                      print(f"    - {err}")
+              print(f"Imported: {len(files) - len(errors)}/{len(files)}")
+              if errors:
+                  for err in errors:
+                      print(f"  ❌ {err}")
                   raise SystemExit(1)
+
+              # Expose imported WM ID as job output for the QA step
+              if last_wm_id:
+                  with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                      f.write(f"imported_wm_id={last_wm_id}\n")
 
           asyncio.run(main())
           EOF
 
   # ---------------------------------------------------------------------------
-  # JOB 3: Post-import — run QA golden dataset tests against the deployed agent.
+  # JOB 3: Post-import QA tests
   # Runs whether import-agents succeeded OR was skipped (skip_import=true).
-  # When skip_import=true, TEST_WM_ID is passed so qa-test.py targets that
-  # specific already-deployed agent directly.
+  # TEST_WM_ID is resolved from: import output → target_wm_id → test_wm_id input
   # ---------------------------------------------------------------------------
   post-import:
     name: Post-import QA tests
@@ -402,36 +345,33 @@ jobs:
       (needs.import-agents.result == 'success' || needs.import-agents.result == 'skipped')
 
     steps:
-      - name: Checkout main branch (read scripts and dataset)
+      - name: Checkout development branch (read scripts and dataset)
         uses: actions/checkout@v4
         with:
           ref: development
           fetch-depth: 1
-
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install httpx
 
-      - name: Run QA golden dataset tests
+      - name: Run QA tests
         env:
           TARGET_MAISA_URL: ${{ inputs.target_url }}
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           AUTH_TYPE: cookie
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}
-          WORKSPACE_NAME: ${{ inputs.workspace_name }}
-          SNAPSHOT: ${{ inputs.snapshot }}
-          AGENT_ID: ${{ inputs.agent_id }}
-          TEST_WM_ID: ${{ inputs.test_wm_id }}
+          # Priority: imported WM ID from job output → target_wm_id → test_wm_id input
+          TEST_WM_ID: ${{ needs.import-agents.outputs.imported_wm_id || inputs.target_wm_id || inputs.test_wm_id }}
         shell: bash
         run: |
           if [ ! -f "scripts/qa-dataset.json" ]; then
-            echo "⚠️  scripts/qa-dataset.json not found. Skipping golden dataset tests."
-            exit 0
+            echo "❌ scripts/qa-dataset.json not found. Failing pipeline."
+            exit 1
           fi
-          echo "✅ Golden dataset found. Running QA tests against deployed agent..."
+          echo "✅ Running QA tests (TEST_WM_ID=$TEST_WM_ID)..."
           python scripts/qa-test.py
 
       - name: Check if post-import script exists
@@ -439,7 +379,6 @@ jobs:
         shell: bash
         run: |
           if [ ! -f "scripts/post_import.py" ]; then
-            echo "⚠️  scripts/post_import.py not found. Skipping."
             echo "exists=false" >> $GITHUB_OUTPUT
           else
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -453,9 +392,6 @@ jobs:
           AUTH_TYPE: cookie
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}
-          WORKSPACE_NAME: ${{ inputs.workspace_name }}
-          SNAPSHOT: ${{ inputs.snapshot }}
-          AGENT_ID: ${{ inputs.agent_id }}
-          TEST_WM_ID: ${{ inputs.test_wm_id }}
+          TEST_WM_ID: ${{ needs.import-agents.outputs.imported_wm_id || inputs.target_wm_id || inputs.test_wm_id }}
         run: |
           python scripts/post_import.py
