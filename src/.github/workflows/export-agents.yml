@@ -12,14 +12,9 @@ on:
       workspace_name:
         description: "Folder name for Git storage (agents/<workspace_name>/...)"
         required: true
-      auth_type:
-        description: "Authentication type"
+      environment:
+        description: "Environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. dev, pre, pro)"
         required: true
-        default: "cookie"
-        type: choice
-        options:
-          - "cookie"
-          - "api_key"
 
   workflow_call:
     inputs:
@@ -32,10 +27,9 @@ on:
       workspace_name:
         required: true
         type: string
-      auth_type:
-        required: false
+      environment:
+        required: true
         type: string
-        default: "cookie"
     secrets:
       maisa_auth_credential:
         required: true
@@ -69,7 +63,7 @@ jobs:
         env:
           SOURCE_URL: ${{ inputs.source_url }}
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
-          AUTH_TYPE: ${{ inputs.auth_type }}
+          MAISA_ENVIRONMENT: ${{ inputs.environment }}
           WORKER_ID: ${{ inputs.worker_id }}
           WORKSPACE_NAME: ${{ inputs.workspace_name }}
           EXPORT_DIR: agents/${{ inputs.workspace_name }}/${{ steps.ts.outputs.value }}
@@ -82,21 +76,32 @@ jobs:
 
           TIMEOUT = 120
 
-          def _headers(auth_type: str, auth_credential: str) -> dict:
-              headers = {
+          import json
+
+          def resolve_credential(raw: str, environment: str) -> str:
+              try:
+                  creds = json.loads(raw)
+                  if isinstance(creds, dict):
+                      cookie = creds.get(environment)
+                      if not cookie:
+                          available = ", ".join(sorted(creds.keys()))
+                          raise SystemExit(f"❌ No credential for environment '{environment}'. Available: {available}")
+                      return str(cookie)
+              except json.JSONDecodeError:
+                  pass
+              return raw
+
+          def _headers(auth_credential: str) -> dict:
+              return {
                   "Accept": "application/json",
-                  "User-Agent": "Mozilla/5.0 (compatible; MaisaExporter/1.0)"
+                  "User-Agent": "Mozilla/5.0 (compatible; MaisaExporter/1.0)",
+                  "Cookie": auth_credential,
               }
-              if auth_type == "api_key":
-                  headers["Authorization"] = f"Bearer {auth_credential}"
-              elif auth_type == "cookie":
-                  headers["Cookie"] = auth_credential
-              return headers
 
           async def main():
               source_url = os.environ["SOURCE_URL"].strip()
-              auth_credential = os.environ["MAISA_AUTH_CREDENTIAL"]
-              auth_type = os.environ.get("AUTH_TYPE", "cookie")
+              environment = os.environ["MAISA_ENVIRONMENT"].strip()
+              auth_credential = resolve_credential(os.environ["MAISA_AUTH_CREDENTIAL"], environment)
               worker_id = os.environ["WORKER_ID"].strip()
               export_dir = Path(os.environ["EXPORT_DIR"])
 
@@ -111,7 +116,7 @@ jobs:
                   print(f"   Cookie: {safe_cookie}")
 
               async with httpx.AsyncClient(timeout=TIMEOUT, verify=False, follow_redirects=True) as client:
-                  resp = await client.get(url, headers=_headers(auth_type, auth_credential))
+                  resp = await client.get(url, headers=_headers(auth_credential))
 
               if resp.status_code >= 400:
                   raise SystemExit(f"❌ HTTP {resp.status_code}: {resp.text[:500]}")
@@ -123,7 +128,7 @@ jobs:
               out_path = export_dir / filename
               out_path.write_bytes(export_bytes)
 
-              print(f"\n✅ Wrote {out_path} ({len(content)} chars)")
+              print(f"\n✅ Wrote {out_path} ({len(export_bytes)} bytes)")
 
           asyncio.run(main())
           EOF

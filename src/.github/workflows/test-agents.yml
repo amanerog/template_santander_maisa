@@ -15,6 +15,9 @@ on:
       target_workspace_id:
         description: "Target Maisa workspace ID (only needed when finding agent by name)"
         required: false
+      environment:
+        description: "Environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. dev, pre, pro)"
+        required: true
 
   workflow_call:
     inputs:
@@ -29,6 +32,9 @@ on:
         type: string
       target_workspace_id:
         required: false
+        type: string
+      environment:
+        required: true
         type: string
     secrets:
       maisa_auth_credential:
@@ -58,7 +64,7 @@ jobs:
         env:
           TARGET_MAISA_URL: ${{ inputs.target_url }}
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
-          AUTH_TYPE: cookie
+          MAISA_ENVIRONMENT: ${{ inputs.environment }}
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}
           TEST_WM_ID: ${{ inputs.test_wm_id }}
@@ -87,7 +93,7 @@ jobs:
         env:
           TARGET_MAISA_URL: ${{ inputs.target_url }}
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
-          AUTH_TYPE: cookie
+          MAISA_ENVIRONMENT: ${{ inputs.environment }}
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}
           TEST_WM_ID: ${{ inputs.test_wm_id }}
