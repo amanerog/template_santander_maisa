@@ -70,13 +70,12 @@ jobs:
         run: |
           python << 'EOF'
           import asyncio
+          import json
           import os
           from pathlib import Path
           import httpx
 
           TIMEOUT = 120
-
-          import json
 
           def resolve_credential(raw: str, environment: str) -> str:
               try:
@@ -106,14 +105,12 @@ jobs:
               export_dir = Path(os.environ["EXPORT_DIR"])
 
               url = f"{source_url.rstrip('/')}/maisa-bff/workers/{worker_id}/export"
-              safe_cookie = auth_credential[:40] + "...[MASKED]" if auth_type == "cookie" else ""
 
               print(f"🔧 Maisa URL:  {source_url}")
-              print(f"🔐 Auth type:  {auth_type}")
+              print(f"🌍 Environment: {environment}")
               print(f"🤖 Worker ID:  {worker_id}")
               print(f"🌐 GET {url}")
-              if safe_cookie:
-                  print(f"   Cookie: {safe_cookie}")
+              print(f"   Cookie: {auth_credential[:40]}...[MASKED]")
 
               async with httpx.AsyncClient(timeout=TIMEOUT, verify=False, follow_redirects=True) as client:
                   resp = await client.get(url, headers=_headers(auth_credential))
