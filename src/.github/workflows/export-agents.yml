@@ -76,7 +76,6 @@ jobs:
         run: |
           python << 'EOF'
           import asyncio
-          import base64
           import os
           from pathlib import Path
           import httpx
@@ -118,15 +117,11 @@ jobs:
                   raise SystemExit(f"❌ HTTP {resp.status_code}: {resp.text[:500]}")
 
               export_bytes = resp.content
-              try:
-                  content = export_bytes.decode("utf-8").strip() + "\n"
-              except UnicodeDecodeError:
-                  content = base64.b64encode(export_bytes).decode("utf-8") + "\n"
 
               export_dir.mkdir(parents=True, exist_ok=True)
               filename = f"{worker_id}.mai"
               out_path = export_dir / filename
-              out_path.write_text(content, encoding="utf-8")
+              out_path.write_bytes(export_bytes)
 
               print(f"\n✅ Wrote {out_path} ({len(content)} chars)")
 
