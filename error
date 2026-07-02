@@ -2,3 +2,8 @@ curl --location --request POST 'https://gppaas-maisa-plat.sgtech.pre.corp/maisa-
 --header 'Cookie: maisaai-session-id=hgzjpBHH5DhTKGxecaduE8XKfmzvBKVStjmg92ZmxIk; maisaai-session-id=hgzjpBHH5DhTKGxecaduE8XKfmzvBKVStjmg92ZmxIk' \
 --form 'file=@"/C:/Users/x637800/Downloads/6a2fad0818ecbc197d3c1214 (1).mai"' \
 --form 'workspaceId="69fb587f3ffc1e5e505a116a"'
+
+
+curl --location --request POST 'https://gppaas-maisa-plat.sgtech.pre.corp/maisa-bff/workers/6a2fad0818ecbc197d3c1214/import?mode=newVersion' \
+--header 'Cookie: maisaai-session-id=hgzjpBHH5DhTKGxecaduE8XKfmzvBKVStjmg92ZmxIk; maisaai-session-id=hgzjpBHH5DhTKGxecaduE8XKfmzvBKVStjmg92ZmxIk' \
+--form 'file=@"/C:/Users/x637800/Downloads/6a2fad0818ecbc197d3c1214 (1).mai"'
