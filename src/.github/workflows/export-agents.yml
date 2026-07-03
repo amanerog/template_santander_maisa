@@ -3,9 +3,6 @@ name: Export Maisa Agents
 on:
   workflow_dispatch:
     inputs:
-      source_url:
-        description: "Source Maisa URL (e.g., https://gppaas-maisa-plat.sgtech.pre.corp)"
-        required: true
       worker_id:
         description: "Worker version ID to export (lastVersionId from the worker manager)"
         required: true
@@ -18,9 +15,6 @@ on:
 
   workflow_call:
     inputs:
-      source_url:
-        required: true
-        type: string
       worker_id:
         required: true
         type: string
@@ -61,7 +55,6 @@ jobs:
 
       - name: Export agent to agents/<workspace>/<timestamp>
         env:
-          SOURCE_URL: ${{ inputs.source_url }}
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           MAISA_ENVIRONMENT: ${{ inputs.environment }}
           WORKER_ID: ${{ inputs.worker_id }}
@@ -77,52 +70,49 @@ jobs:
 
           TIMEOUT = 120
 
-          def resolve_credential(raw: str, environment: str) -> str:
+          def resolve_env(raw: str, environment: str):
               try:
                   creds = json.loads(raw)
-                  if isinstance(creds, dict):
-                      cookie = creds.get(environment)
-                      if not cookie:
-                          available = ", ".join(sorted(creds.keys()))
-                          raise SystemExit(f"❌ No credential for environment '{environment}'. Available: {available}")
-                      return str(cookie)
+                  env = creds.get(environment)
+                  if not env:
+                      available = ", ".join(sorted(creds.keys()))
+                      raise SystemExit(f"❌ No config for environment '{environment}'. Available: {available}")
+                  if isinstance(env, dict):
+                      return env["url"], env["cookie"]
+                  return "", str(env)
               except json.JSONDecodeError:
-                  pass
-              return raw
+                  raise SystemExit("❌ MAISA_AUTH_CREDENTIAL is not valid JSON.")
 
-          def _headers(auth_credential: str) -> dict:
+          def _headers(cookie: str) -> dict:
               return {
                   "Accept": "application/json",
                   "User-Agent": "Mozilla/5.0 (compatible; MaisaExporter/1.0)",
-                  "Cookie": auth_credential,
+                  "Cookie": cookie,
               }
 
           async def main():
-              source_url = os.environ["SOURCE_URL"].strip()
               environment = os.environ["MAISA_ENVIRONMENT"].strip()
-              auth_credential = resolve_credential(os.environ["MAISA_AUTH_CREDENTIAL"], environment)
+              source_url, cookie = resolve_env(os.environ["MAISA_AUTH_CREDENTIAL"], environment)
               worker_id = os.environ["WORKER_ID"].strip()
               export_dir = Path(os.environ["EXPORT_DIR"])
 
               url = f"{source_url.rstrip('/')}/maisa-bff/workers/{worker_id}/export"
 
-              print(f"🔧 Maisa URL:  {source_url}")
               print(f"🌍 Environment: {environment}")
-              print(f"🤖 Worker ID:  {worker_id}")
+              print(f"🔧 Maisa URL:   {source_url}")
+              print(f"🤖 Worker ID:   {worker_id}")
               print(f"🌐 GET {url}")
-              print(f"   Cookie: {auth_credential[:40]}...[MASKED]")
+              print(f"   Cookie: {cookie[:40]}...[MASKED]")
 
               async with httpx.AsyncClient(timeout=TIMEOUT, verify=False, follow_redirects=True) as client:
-                  resp = await client.get(url, headers=_headers(auth_credential))
+                  resp = await client.get(url, headers=_headers(cookie))
 
               if resp.status_code >= 400:
                   raise SystemExit(f"❌ HTTP {resp.status_code}: {resp.text[:500]}")
 
               export_bytes = resp.content
-
               export_dir.mkdir(parents=True, exist_ok=True)
-              filename = f"{worker_id}.mai"
-              out_path = export_dir / filename
+              out_path = export_dir / f"{worker_id}.mai"
               out_path.write_bytes(export_bytes)
 
               print(f"\n✅ Wrote {out_path} ({len(export_bytes)} bytes)")

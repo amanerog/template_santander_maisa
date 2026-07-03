@@ -3,11 +3,11 @@ name: Test Maisa Agents
 on:
   workflow_dispatch:
     inputs:
-      target_url:
-        description: "Target Maisa URL (e.g. https://gppaas-maisa-plat.sgtech.pre.corp)"
-        required: true
       test_wm_id:
         description: "Worker Manager ID of the agent to test"
+        required: true
+      environment:
+        description: "Environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. dev, pre, pro)"
         required: true
       target_organization_id:
         description: "Target Maisa organization ID (only needed when finding agent by name)"
@@ -15,16 +15,13 @@ on:
       target_workspace_id:
         description: "Target Maisa workspace ID (only needed when finding agent by name)"
         required: false
-      environment:
-        description: "Environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. dev, pre, pro)"
-        required: true
 
   workflow_call:
     inputs:
-      target_url:
+      test_wm_id:
         required: true
         type: string
-      test_wm_id:
+      environment:
         required: true
         type: string
       target_organization_id:
@@ -32,9 +29,6 @@ on:
         type: string
       target_workspace_id:
         required: false
-        type: string
-      environment:
-        required: true
         type: string
     secrets:
       maisa_auth_credential:
@@ -62,7 +56,6 @@ jobs:
 
       - name: Run QA tests
         env:
-          TARGET_MAISA_URL: ${{ inputs.target_url }}
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           MAISA_ENVIRONMENT: ${{ inputs.environment }}
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
@@ -82,7 +75,6 @@ jobs:
         shell: bash
         run: |
           if [ ! -f "scripts/post_import.py" ]; then
-            echo "⚠️  scripts/post_import.py not found. Skipping."
             echo "exists=false" >> $GITHUB_OUTPUT
           else
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -91,7 +83,6 @@ jobs:
       - name: Run post-import script
         if: steps.check-post-import.outputs.exists == 'true'
         env:
-          TARGET_MAISA_URL: ${{ inputs.target_url }}
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           MAISA_ENVIRONMENT: ${{ inputs.environment }}
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
