@@ -7,15 +7,13 @@ from scripts/qa-dataset.json against it, and prints "OK" if all pass or "KO" + d
 if any fail.
 
 Required env vars (post-import mode):
-  TARGET_MAISA_URL        Base Maisa URL (e.g. https://gppaas-maisa-plat.sgtech.pre.corp)
-  MAISA_AUTH_CREDENTIAL   Full cookie string or bearer token
-  ORGANIZATION_ID         Maisa organization ID
-  WORKSPACE_ID            Maisa workspace ID
+  MAISA_AUTH_CREDENTIAL   JSON secret: {"dev": {"url": "...", "cookie": "..."}, "pre": {...}, ...}
+  MAISA_ENVIRONMENT       Environment key to look up in MAISA_AUTH_CREDENTIAL (e.g. dev, pre, pro)
 
 Optional env vars:
-  AUTH_TYPE               "cookie" (default) or "api_key"
   TEST_WM_ID              Worker Manager ID to test directly — skips the name search.
-                          Use this when testing an already-deployed agent without importing.
+  ORGANIZATION_ID         Maisa organization ID (only needed when TEST_WM_ID is not set)
+  WORKSPACE_ID            Maisa workspace ID (only needed when TEST_WM_ID is not set)
 
 qa-dataset.json format:
 {
@@ -54,15 +52,12 @@ POLL_MAX_ATTEMPTS = 40  # up to ~2 min
 class MaisaAPI:
     base_url: str
     auth_credential: str
-    auth_type: str = "cookie"
 
     def _headers(self) -> Dict[str, str]:
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; MaisaQATest/1.0)"}
-        if self.auth_type == "api_key":
-            headers["Authorization"] = f"Bearer {self.auth_credential}"
-        else:
-            headers["Cookie"] = self.auth_credential
-        return headers
+        return {
+            "User-Agent": "Mozilla/5.0 (compatible; MaisaQATest/1.0)",
+            "Cookie": self.auth_credential,
+        }
 
     def _url(self, path: str) -> str:
         return f"{self.base_url.rstrip('/')}/maisa-bff{path}"
@@ -214,20 +209,31 @@ def check_response(content: str, expected: str, match: str) -> bool:
     return expected.lower() in content.lower()
 
 
-def main() -> None:
-    target_url = os.environ.get("TARGET_MAISA_URL", "").strip()
-    auth_credential = os.environ.get("MAISA_AUTH_CREDENTIAL", "").strip()
+def resolve_env(raw: str, environment: str):
+    try:
+        creds = json.loads(raw)
+        env = creds.get(environment)
+        if not env:
+            available = ", ".join(sorted(creds.keys()))
+            raise SystemExit(f"❌ No config for environment '{environment}'. Available: {available}")
+        if isinstance(env, dict):
+            return env["url"], env["cookie"]
+        return "", str(env)
+    except json.JSONDecodeError:
+        raise SystemExit("❌ MAISA_AUTH_CREDENTIAL is not valid JSON.")
 
-    if not target_url or not auth_credential:
+
+def main() -> None:
+    raw_credential = os.environ.get("MAISA_AUTH_CREDENTIAL", "").strip()
+    environment = os.environ.get("MAISA_ENVIRONMENT", "").strip()
+
+    if not raw_credential or not environment:
         print("OK")
         return
 
-    auth_type = os.environ.get("AUTH_TYPE", "cookie").strip()
+    target_url, auth_credential = resolve_env(raw_credential, environment)
     org_id = os.environ.get("ORGANIZATION_ID", "").strip()
     workspace_id = os.environ.get("WORKSPACE_ID", "").strip()
-
-    if not org_id or not workspace_id:
-        raise SystemExit("❌ ORGANIZATION_ID and WORKSPACE_ID env vars are required in post-import mode.")
 
     dataset = load_dataset()
     tests: List[dict] = dataset.get("tests", [])
@@ -236,7 +242,7 @@ def main() -> None:
 
     agent_name = dataset.get("agent_name", "").strip()
 
-    api = MaisaAPI(base_url=target_url, auth_credential=auth_credential, auth_type=auth_type)
+    api = MaisaAPI(base_url=target_url, auth_credential=auth_credential)
 
     test_wm_id = os.environ.get("TEST_WM_ID", "").strip()
 
