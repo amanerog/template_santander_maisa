@@ -1,0 +1,68 @@
+name: Promote Maisa Agent
+
+# Exports an agent from a source environment and imports it into a target environment.
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker_id:
+        description: "Worker version ID to export (lastVersionId from the worker manager)"
+        required: true
+      workspace_name:
+        description: "Folder name for Git storage (agents/<workspace_name>/...)"
+        required: true
+      source_environment:
+        description: "Source environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. dev, pre)"
+        required: true
+      target_environment:
+        description: "Target environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. pre, pro)"
+        required: true
+      target_organization_id:
+        description: "Target Maisa organization ID"
+        required: true
+      target_workspace_id:
+        description: "Target Maisa workspace ID"
+        required: true
+      import_mode:
+        description: "new_worker = new worker in workspace; new_version = new version of existing worker"
+        required: false
+        default: "new_worker"
+        type: choice
+        options:
+          - "new_worker"
+          - "new_version"
+      target_wm_id:
+        description: "Worker Manager ID to create a new version of (only if import_mode=new_version)"
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: maisa-promote-${{ inputs.workspace_name }}
+  cancel-in-progress: false
+
+jobs:
+  export:
+    name: Export from ${{ inputs.source_environment }}
+    uses: ./.github/workflows/export-agents.yml
+    with:
+      worker_id: ${{ inputs.worker_id }}
+      workspace_name: ${{ inputs.workspace_name }}
+      environment: ${{ inputs.source_environment }}
+    secrets:
+      maisa_auth_credential: ${{ secrets.MAISA_AUTH_CREDENTIAL }}
+
+  import:
+    name: Import to ${{ inputs.target_environment }}
+    needs: export
+    uses: ./.github/workflows/import-agents.yml
+    with:
+      workspace_name: ${{ inputs.workspace_name }}
+      target_organization_id: ${{ inputs.target_organization_id }}
+      target_workspace_id: ${{ inputs.target_workspace_id }}
+      environment: ${{ inputs.target_environment }}
+      import_mode: ${{ inputs.import_mode }}
+      target_wm_id: ${{ inputs.target_wm_id }}
+    secrets:
+      maisa_auth_credential: ${{ secrets.MAISA_AUTH_CREDENTIAL }}
