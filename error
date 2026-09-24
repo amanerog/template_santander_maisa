@@ -1,5 +1,0 @@
-{
-  "dev": {"url": "https://gppaas-maisa.dev.sgtech.corp", "cookie": "maisaai-session-id=..."},
-  "pre": {"url": "https://gppaas-maisa-plat.sgtech.pre.corp", "cookie": "maisaai-session-id=..."},
-  "pro": {"url": "https://gppaas-maisa.sgtech.pro.corp", "cookie": "maisaai-session-id=..."}
-}

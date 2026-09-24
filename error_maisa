@@ -1,2 +1,0 @@
-curl --location --request GET 'https://gppaas-maisa-plat.sgtech.pre.corp/maisa-bff/workers/6a2fad0818ecbc197d3c1214/export' \
---header 'Cookie: maisa_pro_sidebar_state=true; maisaai-session-id=XUDdpreC4jsdPkPclIXZLxKOnDS2CKxfx9jA4W-j2ps'

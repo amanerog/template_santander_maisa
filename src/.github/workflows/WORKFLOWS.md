@@ -39,62 +39,10 @@ Each environment key maps to the base URL and the full browser cookie string for
 | Branch | Purpose |
 |---|---|
 | default branch (`main`) | Source of the release tags and of the QA scripts (`scripts/qa-test.py`, `scripts/qa-dataset.json`), which are read from the tagged commit |
-| `development` | Used by `test-agents.yml` to read the QA scripts |
-| `feature/export-data` | Storage for `export-agents.yml` / `export-config-agents.yml` output. Not part of the promotion chain |
 
 ---
 
 ## Workflows
-
-### `export-agents.yml` — Export a single agent
-
-Exports one Maisa Digital Worker from a source environment and saves it as a `.mai` file in the `feature/export-data` branch.
-
-**Trigger:** Manual (`workflow_dispatch`) or called from another workflow.
-
-**Inputs:**
-
-| Input | Required | Description |
-|---|---|---|
-| `worker_id` | Yes | Worker version ID to export (`lastVersionId` from the worker manager) |
-| `workspace_name` | Yes | Git folder name for storage: `agents/<workspace_name>/` |
-| `environment` | Yes | Key in `MAISA_AUTH_CREDENTIAL` (e.g. `dev`, `pre`, `pro`) |
-
-**What it does:**
-1. Checks out `feature/export-data`
-2. Resolves the URL and cookie from `MAISA_AUTH_CREDENTIAL[environment]`
-3. Calls `GET /maisa-bff/workers/{worker_id}/export`
-4. Saves the response as `agents/<workspace_name>/<YYYYMMDD-HHMMSS>/{worker_id}.mai`
-5. Commits and pushes to `feature/export-data`
-
-**Output file location:** `agents/<workspace_name>/<timestamp>/<worker_id>.mai`
-
----
-
-### `export-config-agents.yml` — Export agent configurations
-
-Exports the configuration (metadata JSON) of all worker managers in a workspace. Useful for inspecting worker settings without the full binary export.
-
-**Trigger:** Manual (`workflow_dispatch`) or called from another workflow.
-
-**Inputs:**
-
-| Input | Required | Description |
-|---|---|---|
-| `workspace_name` | Yes | Git folder name for storage |
-| `organization_id` | Yes | Maisa organization ID |
-| `workspace_id` | Yes | Maisa workspace ID |
-| `environment` | Yes | Key in `MAISA_AUTH_CREDENTIAL` |
-| `mode` | No | `all` (default) or `single` |
-| `worker_manager_id` | No | Worker Manager ID (only if `mode=single`) |
-
-**What it does:**
-1. Lists all worker managers via `GET /maisa-bff/organizations/{org}/workspaces/{ws}/worker-managers`
-2. Fetches full details for each via `GET /maisa-bff/worker-manager/{id}`
-3. Saves each as `{name}__{status}__{id}.json` under `agents/<workspace_name>/<timestamp>/`
-4. Commits and pushes to `feature/export-data`
-
----
 
 ### `release-agent.yml` — Publish an agent as a release
 
@@ -170,13 +118,14 @@ Runs the QA test suite against an already-deployed agent without importing anyth
 
 | Input | Required | Description |
 |---|---|---|
+| `release_tag` | Yes | Release tag (`agent-<name>-<YYYYMMDD-HHMMSS>`) whose scripts and dataset are used |
 | `test_wm_id` | Yes | Worker Manager ID of the agent to test |
 | `environment` | Yes | Key in `MAISA_AUTH_CREDENTIAL` |
 | `target_organization_id` | No | Maisa organization ID (only needed when finding agent by name) |
 | `target_workspace_id` | No | Maisa workspace ID (only needed when finding agent by name) |
 
 **What it does:**
-1. Checks out `development` branch to read `scripts/qa-test.py` and `scripts/qa-dataset.json`
+1. Checks out the release tag to read `scripts/qa-test.py` and `scripts/qa-dataset.json`
 2. Calls `GET /maisa-bff/worker-manager/{test_wm_id}` to get `lastVersionId`
 3. Runs each test case: `POST /maisa-bff/workers/{lastVersionId}/run` → polls `GET /maisa-bff/executions/{id}` until `completed`
 4. Prints `OK` if all pass, `KO` if any fail
@@ -224,7 +173,7 @@ Updates the reusable CI/CD workflows from the shared `gln-workflows` repository.
 **File:** `scripts/qa-test.py`  
 **Dataset:** `scripts/qa-dataset.json`
 
-Both files live in the `development` branch.
+Both files are read from the tagged commit of the release (`import-agents.yml` and `test-agents.yml`).
 
 ### Pre-check mode
 When `MAISA_AUTH_CREDENTIAL` or `MAISA_ENVIRONMENT` are not set, the script immediately prints `OK` and exits. This is used as a gate before import to verify the script exists and is syntactically valid.
