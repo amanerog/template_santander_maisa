@@ -38,8 +38,9 @@ Each environment key maps to the base URL and the full browser cookie string for
 
 | Branch | Purpose |
 |---|---|
-| `development` | Source of truth for scripts (`scripts/qa-test.py`, `scripts/qa-dataset.json`) |
-| `feature/export-data` | Storage for exported `.mai` files under `agents/<workspace_name>/<timestamp>/` |
+| default branch (`main`) | Source of the release tags and of the QA scripts (`scripts/qa-test.py`, `scripts/qa-dataset.json`), which are read from the tagged commit |
+| `development` | Used by `test-agents.yml` to read the QA scripts |
+| `feature/export-data` | Storage for `export-agents.yml` / `export-config-agents.yml` output. Not part of the promotion chain |
 
 ---
 
@@ -95,9 +96,25 @@ Exports the configuration (metadata JSON) of all worker managers in a workspace.
 
 ---
 
-### `import-agents.yml` — Import agents into Maisa
+### `release-agent.yml` — Publish an agent as a release
 
-Imports all `.mai` files from a Git snapshot into a target Maisa environment. Includes a QA pre-check and post-import test.
+Exports one agent from a source environment and publishes it as a GitHub Release. This is the only way an agent can enter the promotion chain.
+
+**Trigger:** Manual (`workflow_dispatch`) or called from another workflow. Only runs from the default branch.
+
+**Inputs:** `worker_id` (version ID to export), `agent_name` (lowercase, digits and dashes), `environment` (source key in `MAISA_AUTH_CREDENTIAL`).
+
+**Result:**
+- Tag `agent-<agent_name>-<YYYYMMDD-HHMMSS>` on the current default-branch commit (automatic versioning)
+- Assets `<agent_name>.mai` and `<agent_name>.mai.sha256`
+
+**Manual fallback:** if the bot cannot create tags/releases, a user can create the release by hand with the same tag format and attach the `.mai` and its `.sha256` (`sha256sum x.mai > x.mai.sha256`). The tag must be on the default branch history.
+
+---
+
+### `import-agents.yml` — Deploy a release into Maisa
+
+Imports the `.mai` of a release into a target environment. The release tag is the only accepted source.
 
 **Trigger:** Manual (`workflow_dispatch`) or called from another workflow.
 
@@ -105,11 +122,10 @@ Imports all `.mai` files from a Git snapshot into a target Maisa environment. In
 
 | Input | Required | Description |
 |---|---|---|
-| `workspace_name` | Yes | Git folder containing the `.mai` files |
+| `release_tag` | Yes | `agent-<name>-<YYYYMMDD-HHMMSS>` |
 | `target_organization_id` | Yes | Target Maisa organization ID |
 | `target_workspace_id` | Yes | Target Maisa workspace ID |
-| `environment` | Yes | Key in `MAISA_AUTH_CREDENTIAL` for the target |
-| `snapshot` | No | Snapshot folder (`YYYYMMDD-HHMMSS`). Empty = latest |
+| `environment` | Yes | `dev`, `pre` or `pro` (key in `MAISA_AUTH_CREDENTIAL`) |
 | `import_mode` | No | `new_worker` (default) or `new_version` |
 | `target_wm_id` | No | Worker Manager ID to update (only if `import_mode=new_version`) |
 
@@ -123,15 +139,24 @@ Imports all `.mai` files from a Git snapshot into a target Maisa environment. In
 **Jobs:**
 
 ```
-qa-test (pre-check) → import-agents → post-import (QA tests)
+validate-release → qa-test (pre-check) → deploy  [GitHub Environment approval]
 ```
 
-1. **QA gate:** Runs `scripts/qa-test.py` without credentials — must print `OK`. Fails if the script is missing.
-2. **Import:** Reads all `.mai` files from the snapshot, calls the import API for each, captures the resulting WM ID.
-3. **Post-import QA:** Runs `scripts/qa-test.py` with credentials against the imported agent. Requires `scripts/qa-dataset.json`.
+1. **validate-release:** the tag has the expected format, the release is published with exactly one `.mai` and one `.sha256`, the tag belongs to the default-branch history, and for `pro` the release already has `deployed-pre.txt`.
+2. **qa-test:** runs `scripts/qa-test.py` from the tagged commit without credentials — must print `OK`.
+3. **deploy:** waits for approval on the GitHub Environment, downloads the asset, verifies the sha256, imports it, runs the QA dataset and `scripts/post_import.py` (if present) from the tagged commit, and uploads `deployed-<env>.txt` to the release.
 
-**TEST_WM_ID resolution priority:**
-`imported_wm_id` (from import response) → `target_wm_id` → *(empty = QA skipped)*
+**Environment mapping and approvals:**
+
+| `environment` | GitHub Environment | Approval |
+|---|---|---|
+| `dev` | `certification` | None |
+| `pre` | `preproduction` | None (optional reviewers) |
+| `pro` | `production` | **Required reviewers (human in the loop)** |
+
+Configure them in *Settings → Environments*. For `production`: add required reviewers, enable *Prevent self-review* and restrict deployment branches to the default branch.
+
+> **Note:** approval only protects what runs under the environment. While `MAISA_AUTH_CREDENTIAL` is a single repository secret containing the `pro` cookie, anyone able to run workflows can read it. Move the `pro` credential to an environment secret on `production` to make the gate effective.
 
 ---
 
@@ -158,40 +183,23 @@ Runs the QA test suite against an already-deployed agent without importing anyth
 
 ---
 
-### `promote-agent.yml` — Promote agent between environments
+### `promote-agent.yml` — Release and deploy to pre
 
-Orchestrates a full export → import pipeline. Exports an agent from a source environment and imports it into a target environment in a single workflow run.
+Chains `release-agent` (from the source environment) and `import-agents` (to `pre`) in one run.
 
 **Trigger:** Manual (`workflow_dispatch`) only.
 
-**Inputs:**
+**Inputs:** `worker_id`, `agent_name`, `source_environment`, `target_organization_id`, `target_workspace_id`, `import_mode`, `target_wm_id`.
 
-| Input | Required | Description |
-|---|---|---|
-| `worker_id` | Yes | Worker version ID to export from the source |
-| `workspace_name` | Yes | Git folder name (shared between export and import) |
-| `source_environment` | Yes | Source environment key (e.g. `dev`) |
-| `target_environment` | Yes | Target environment key (e.g. `pre`) |
-| `target_organization_id` | Yes | Target Maisa organization ID |
-| `target_workspace_id` | Yes | Target Maisa workspace ID |
-| `import_mode` | No | `new_worker` (default) or `new_version` |
-| `target_wm_id` | No | Worker Manager ID (only if `import_mode=new_version`) |
+**Promoting to pro:** run **Import Maisa Agents** with the same `release_tag` and `environment=pro`. The same artifact tested in pre is deployed, after a reviewer approves the `production` environment. Nothing is re-exported.
 
-**Job flow:**
-
-```
-export (source_environment) → import (target_environment) → post-import QA
-```
-
-A `concurrency` group on `workspace_name` prevents parallel promotions from creating push conflicts on `feature/export-data`.
-
-**Typical use:** Promote `dev` → `pre` or `pre` → `pro`.
+A `concurrency` group on `agent_name` prevents parallel promotions of the same agent.
 
 ---
 
 ### `cd.yml` — Deploy
 
-Standard Gluon deployment workflow. Delegates to the shared `gln-workflows` reusable workflow.
+Standard Gluon deployment workflow. Delegates to the shared `gln-workflows` reusable workflow. It deploys to AWS, so it is **not part of the Maisa promotion flow** (`release-agent` → `import-agents`).
 
 **Inputs:** `version`, `environment`, `environment-type` (`certification` / `preproduction` / `production`), `task-number`
 

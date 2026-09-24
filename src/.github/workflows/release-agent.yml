@@ -1,0 +1,166 @@
+name: Release Maisa Agent
+
+# Exports an agent from a Maisa environment and publishes it as a GitHub Release.
+#   tag:    agent-<agent_name>-<YYYYMMDD-HHMMSS>   (created on the current default-branch commit)
+#   assets: <agent_name>.mai + <agent_name>.mai.sha256
+# import-agents.yml only accepts one of these releases as its source.
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker_id:
+        description: "Worker version ID to export (lastVersionId from the worker manager)"
+        required: true
+      agent_name:
+        description: "Agent name used in the tag and asset name (lowercase letters, digits and dashes)"
+        required: true
+      environment:
+        description: "Source environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. dev)"
+        required: true
+
+  workflow_call:
+    inputs:
+      worker_id:
+        required: true
+        type: string
+      agent_name:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+    secrets:
+      maisa_auth_credential:
+        required: true
+    outputs:
+      release_tag:
+        description: "Tag of the release that was created"
+        value: ${{ jobs.release-agent.outputs.release_tag }}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: maisa-release-${{ inputs.agent_name }}
+  cancel-in-progress: false
+
+jobs:
+  release-agent:
+    name: Export and publish release
+    runs-on: base-runner
+    outputs:
+      release_tag: ${{ steps.tag.outputs.value }}
+
+    steps:
+      - name: Validate inputs and compute tag
+        id: tag
+        shell: bash
+        env:
+          AGENT_NAME: ${{ inputs.agent_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+
+          if [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "❌ Releases can only be created from '$DEFAULT_BRANCH' (running on $GITHUB_REF)."
+            exit 1
+          fi
+
+          if [[ ! "$AGENT_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+            echo "❌ agent_name must contain only lowercase letters, digits and single dashes: '$AGENT_NAME'"
+            exit 1
+          fi
+
+          echo "value=agent-${AGENT_NAME}-$(date -u +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install httpx
+
+      - name: Export agent (.mai)
+        env:
+          MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
+          MAISA_ENVIRONMENT: ${{ inputs.environment }}
+          WORKER_ID: ${{ inputs.worker_id }}
+          AGENT_NAME: ${{ inputs.agent_name }}
+          OUT_DIR: ${{ runner.temp }}/release
+        run: |
+          python << 'EOF'
+          import json
+          import os
+          from pathlib import Path
+          import httpx
+
+          TIMEOUT = 120
+
+          def resolve_env(raw: str, environment: str):
+              try:
+                  creds = json.loads(raw)
+              except json.JSONDecodeError:
+                  raise SystemExit("❌ MAISA_AUTH_CREDENTIAL is not valid JSON.")
+              env = creds.get(environment)
+              if not env:
+                  available = ", ".join(sorted(creds.keys()))
+                  raise SystemExit(f"❌ No config for environment '{environment}'. Available: {available}")
+              if isinstance(env, dict):
+                  return env["url"], env["cookie"]
+              return "", str(env)
+
+          environment = os.environ["MAISA_ENVIRONMENT"].strip()
+          base_url, cookie = resolve_env(os.environ["MAISA_AUTH_CREDENTIAL"], environment)
+          worker_id = os.environ["WORKER_ID"].strip()
+          agent_name = os.environ["AGENT_NAME"].strip()
+          out_dir = Path(os.environ["OUT_DIR"])
+
+          url = f"{base_url.rstrip('/')}/maisa-bff/workers/{worker_id}/export"
+          print(f"🌍 Environment: {environment}")
+          print(f"🤖 Worker ID:   {worker_id}")
+          print(f"🌐 GET {url}")
+
+          headers = {
+              "Accept": "application/json",
+              "User-Agent": "Mozilla/5.0 (compatible; MaisaExporter/1.0)",
+              "Cookie": cookie,
+          }
+          resp = httpx.get(url, headers=headers, timeout=TIMEOUT, verify=False, follow_redirects=True)
+          if resp.status_code >= 400:
+              raise SystemExit(f"❌ HTTP {resp.status_code}: {resp.text[:500]}")
+          if not resp.content:
+              raise SystemExit("❌ Export returned an empty body.")
+
+          out_dir.mkdir(parents=True, exist_ok=True)
+          out_path = out_dir / f"{agent_name}.mai"
+          out_path.write_bytes(resp.content)
+          print(f"✅ Wrote {out_path} ({len(resp.content)} bytes)")
+          EOF
+
+      - name: Publish release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.value }}
+          AGENT_NAME: ${{ inputs.agent_name }}
+          WORKER_ID: ${{ inputs.worker_id }}
+          SOURCE_ENV: ${{ inputs.environment }}
+          OUT_DIR: ${{ runner.temp }}/release
+        run: |
+          set -euo pipefail
+          cd "$OUT_DIR"
+
+          sha256sum "$AGENT_NAME.mai" > "$AGENT_NAME.mai.sha256"
+          cat "$AGENT_NAME.mai.sha256"
+
+          NOTES="Agent: $AGENT_NAME
+          Exported from: $SOURCE_ENV (worker version $WORKER_ID)
+          Triggered by: $GITHUB_ACTOR
+          Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+          gh release create "$TAG" \
+            "$AGENT_NAME.mai" "$AGENT_NAME.mai.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --notes "$NOTES"
+
+          echo "✅ Release $TAG published"

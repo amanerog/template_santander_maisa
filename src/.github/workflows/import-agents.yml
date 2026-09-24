@@ -1,10 +1,19 @@
 name: Import Maisa Agents
 
+# Imports the .mai attached to a GitHub Release (created by release-agent.yml) into a Maisa environment.
+# A release tag is the only accepted source. The deploy job runs under a GitHub Environment,
+# so reviewers configured on it (mandatory for production) must approve before anything is imported.
+#
+#   dev -> "certification"   pre -> "preproduction"   pro -> "production"
+#
+# Promotion to pro requires the release to have been deployed and tested in pre first
+# (marker asset deployed-pre.txt, written at the end of a successful pre run).
+
 on:
   workflow_dispatch:
     inputs:
-      workspace_name:
-        description: "Workspace SOURCE in Git (folder agents/<workspace_name>/...)"
+      release_tag:
+        description: "Release tag to deploy (agent-<name>-<YYYYMMDD-HHMMSS>)"
         required: true
       target_organization_id:
         description: "Target Maisa organization ID"
@@ -13,11 +22,13 @@ on:
         description: "Target Maisa workspace ID"
         required: true
       environment:
-        description: "Environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. dev, pre, pro)"
+        description: "Target environment key in MAISA_AUTH_CREDENTIAL JSON (dev, pre or pro)"
         required: true
-      snapshot:
-        description: "Snapshot folder (YYYYMMDD-HHMMSS). Empty = latest"
-        required: false
+        type: choice
+        options:
+          - "dev"
+          - "pre"
+          - "pro"
       import_mode:
         description: "new_worker = new worker in workspace; new_version = new version of existing worker"
         required: false
@@ -32,7 +43,7 @@ on:
 
   workflow_call:
     inputs:
-      workspace_name:
+      release_tag:
         required: true
         type: string
       target_organization_id:
@@ -43,9 +54,6 @@ on:
         type: string
       environment:
         required: true
-        type: string
-      snapshot:
-        required: false
         type: string
       import_mode:
         required: false
@@ -61,19 +69,96 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: maisa-deploy-${{ inputs.environment }}-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
 jobs:
   # ---------------------------------------------------------------------------
-  # JOB 1: QA gate — runs qa-test.py without credentials (must print OK)
+  # JOB 1: The release exists, is published, comes from the default branch and
+  #        (for pro) was already deployed to pre. No credentials involved.
+  # ---------------------------------------------------------------------------
+  validate-release:
+    name: Validate release
+    runs-on: base-runner
+    outputs:
+      gh_environment: ${{ steps.validate.outputs.gh_environment }}
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.release_tag }}
+          fetch-depth: 0
+
+      - name: Validate release
+        id: validate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+          MAISA_ENVIRONMENT: ${{ inputs.environment }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$TAG" =~ ^agent-[a-z0-9]+(-[a-z0-9]+)*-[0-9]{8}-[0-9]{6}$ ]]; then
+            echo "❌ '$TAG' is not an agent release tag (agent-<name>-<YYYYMMDD-HHMMSS>)."
+            exit 1
+          fi
+
+          case "$MAISA_ENVIRONMENT" in
+            dev) GH_ENV=certification ;;
+            pre) GH_ENV=preproduction ;;
+            pro) GH_ENV=production ;;
+            *)
+              echo "❌ Unknown environment '$MAISA_ENVIRONMENT'. Expected dev, pre or pro."
+              exit 1
+              ;;
+          esac
+
+          RELEASE="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,assets)"
+
+          if [ "$(jq -r '.isDraft' <<< "$RELEASE")" != "false" ]; then
+            echo "❌ Release $TAG is a draft. Publish it first."
+            exit 1
+          fi
+
+          ASSETS="$(jq -r '.assets[].name' <<< "$RELEASE")"
+
+          if [ "$(grep -c '\.mai$' <<< "$ASSETS" || true)" != "1" ] || [ "$(grep -c '\.mai\.sha256$' <<< "$ASSETS" || true)" != "1" ]; then
+            echo "❌ Release $TAG must have exactly one .mai and one .mai.sha256 asset. Found:"
+            echo "$ASSETS"
+            exit 1
+          fi
+
+          if ! git merge-base --is-ancestor "$(git rev-parse HEAD)" "origin/$DEFAULT_BRANCH"; then
+            echo "❌ Tag $TAG does not belong to the history of '$DEFAULT_BRANCH'."
+            exit 1
+          fi
+
+          if [ "$MAISA_ENVIRONMENT" = "pro" ] && ! grep -qx 'deployed-pre.txt' <<< "$ASSETS"; then
+            echo "❌ Release $TAG has not been deployed and tested in pre (missing deployed-pre.txt)."
+            exit 1
+          fi
+
+          echo "✅ Release $TAG is valid for $MAISA_ENVIRONMENT (GitHub environment: $GH_ENV)"
+          echo "gh_environment=$GH_ENV" >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------------------
+  # JOB 2: QA gate — runs qa-test.py from the tagged commit without credentials
+  #        (must print OK). Runs before approval is requested.
   # ---------------------------------------------------------------------------
   qa-test:
     name: QA gate (pre-check)
     runs-on: base-runner
+    needs: validate-release
 
     steps:
-      - name: Checkout development branch (read scripts)
+      - name: Checkout release tag (read scripts)
         uses: actions/checkout@v4
         with:
-          ref: development
+          ref: refs/tags/${{ inputs.release_tag }}
           fetch-depth: 1
 
       - name: Run QA test script (must print OK)
@@ -82,14 +167,14 @@ jobs:
           set -euo pipefail
 
           if [ ! -f "scripts/qa-test.py" ]; then
-            echo "❌ scripts/qa-test.py not found. Failing pipeline."
+            echo "❌ scripts/qa-test.py not found in the release. Failing pipeline."
             exit 1
           fi
 
           echo "✅ QA test script found. Running pre-check (no credentials)..."
           OUT="$(python scripts/qa-test.py | tee /dev/stderr)"
 
-          if ! echo "$OUT" | grep -q "OK"; then
+          if ! echo "$OUT" | grep -qx "OK"; then
             echo "❌ qa-test.py did not print OK. Failing workflow."
             exit 1
           fi
@@ -97,45 +182,65 @@ jobs:
           echo "✅ QA pre-check passed"
 
   # ---------------------------------------------------------------------------
-  # JOB 2: Import all agents from latest (or specified) snapshot into Maisa
+  # JOB 3: Approval (GitHub Environment) -> import the release asset -> QA tests
+  #        -> mark the release as deployed to this environment.
   # ---------------------------------------------------------------------------
-  import-agents:
-    name: Import agents
+  deploy:
+    name: Deploy ${{ inputs.release_tag }} to ${{ inputs.environment }}
     runs-on: base-runner
-    needs: qa-test
-    outputs:
-      imported_wm_id: ${{ steps.import.outputs.imported_wm_id }}
+    needs: [validate-release, qa-test]
+    environment: ${{ needs.validate-release.outputs.gh_environment }}
+    permissions:
+      contents: write
 
     steps:
-      - name: Checkout export branch (read exports)
+      - name: Checkout release tag (scripts and dataset)
         uses: actions/checkout@v4
         with:
-          ref: feature/export-data
+          ref: refs/tags/${{ inputs.release_tag }}
           fetch-depth: 1
+
+      - name: Download and verify release asset
+        id: asset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+          DOWNLOAD_DIR: ${{ runner.temp }}/release
+        run: |
+          set -euo pipefail
+
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --dir "$DOWNLOAD_DIR" --pattern '*.mai' --pattern '*.mai.sha256'
+
+          cd "$DOWNLOAD_DIR"
+          sha256sum -c ./*.mai.sha256
+
+          MAI_FILE="$(ls ./*.mai)"
+          echo "mai_file=$DOWNLOAD_DIR/${MAI_FILE#./}" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(cut -d' ' -f1 ./*.mai.sha256)" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install httpx
 
-      - name: Import agents from Git snapshot
+      - name: Import agent into Maisa
         id: import
         env:
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           MAISA_ENVIRONMENT: ${{ inputs.environment }}
           TARGET_ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           TARGET_WORKSPACE_ID: ${{ inputs.target_workspace_id }}
-          WORKSPACE_NAME: ${{ inputs.workspace_name }}
-          SNAPSHOT: ${{ inputs.snapshot }}
+          MAI_FILE: ${{ steps.asset.outputs.mai_file }}
           IMPORT_MODE: ${{ inputs.import_mode }}
           TARGET_WM_ID: ${{ inputs.target_wm_id }}
         run: |
           python << 'EOF'
-          import asyncio
           import json
           import os
           from pathlib import Path
-          from typing import Any, Dict, List
+          from typing import Any
           import httpx
 
           TIMEOUT = 120
@@ -143,39 +248,15 @@ jobs:
           def resolve_env(raw: str, environment: str):
               try:
                   creds = json.loads(raw)
-                  env = creds.get(environment)
-                  if not env:
-                      available = ", ".join(sorted(creds.keys()))
-                      raise SystemExit(f"❌ No config for environment '{environment}'. Available: {available}")
-                  if isinstance(env, dict):
-                      return env["url"], env["cookie"]
-                  return "", str(env)
               except json.JSONDecodeError:
                   raise SystemExit("❌ MAISA_AUTH_CREDENTIAL is not valid JSON.")
-
-          def headers(cookie: str) -> Dict[str, str]:
-              return {
-                  "Cookie": cookie,
-                  "User-Agent": "Mozilla/5.0 (compatible; MaisaImporter/1.0)",
-              }
-
-          def api_url(base_url: str, path: str) -> str:
-              return f"{base_url.rstrip('/')}/maisa-bff{path}"
-
-          def pick_snapshot_dir(base_dir: Path, snapshot: str) -> Path:
-              if snapshot:
-                  p = base_dir / snapshot
-                  if not p.exists():
-                      raise RuntimeError(f"Snapshot folder not found: {p}")
-                  return p
-              candidates = sorted(p for p in base_dir.iterdir() if p.is_dir())
-              if not candidates:
-                  raise RuntimeError(f"No snapshot folders found under {base_dir}")
-              return candidates[-1]
-
-          def filename_agent_id(p: Path) -> str:
-              parts = p.stem.split("__")
-              return parts[-1] if len(parts) >= 2 else p.stem
+              env = creds.get(environment)
+              if not env:
+                  available = ", ".join(sorted(creds.keys()))
+                  raise SystemExit(f"❌ No config for environment '{environment}'. Available: {available}")
+              if isinstance(env, dict):
+                  return env["url"], env["cookie"]
+              return "", str(env)
 
           def extract_wm_id(resp: Any) -> str:
               if not isinstance(resp, dict):
@@ -183,137 +264,60 @@ jobs:
               data = resp.get("data", resp)
               if not isinstance(data, dict):
                   return ""
-              return (
-                  data.get("workerManagerId") or
-                  data.get("id") or
-                  data.get("workerId") or
-                  ""
-              )
+              return data.get("workerManagerId") or data.get("id") or data.get("workerId") or ""
 
-          async def import_agent(
-              base_url: str,
-              cookie: str,
-              org_id: str,
-              ws_id: str,
-              mai_path: Path,
-              import_mode: str,
-              target_wm_id: str,
-          ) -> Any:
-              file_bytes = mai_path.read_bytes()
+          environment = os.environ["MAISA_ENVIRONMENT"].strip()
+          base_url, cookie = resolve_env(os.environ["MAISA_AUTH_CREDENTIAL"], environment)
+          org_id = os.environ["TARGET_ORGANIZATION_ID"].strip()
+          ws_id = os.environ["TARGET_WORKSPACE_ID"].strip()
+          mai_path = Path(os.environ["MAI_FILE"])
+          import_mode = os.environ.get("IMPORT_MODE", "new_worker").strip()
+          target_wm_id = os.environ.get("TARGET_WM_ID", "").strip()
 
-              if import_mode == "new_version":
-                  url = api_url(base_url, f"/workers/{target_wm_id}/import")
-                  params = {"mode": "newVersion"}
-                  form_data = {}
-                  print(f"    📤 POST {url}?mode=newVersion")
-              else:
-                  url = api_url(base_url, f"/organizations/{org_id}/workspaces/{ws_id}/workers/import")
-                  params = {}
-                  form_data = {"workspaceId": ws_id}
-                  print(f"    📤 POST {url}")
+          if import_mode not in ("new_worker", "new_version"):
+              raise SystemExit(f"❌ Invalid import_mode: {import_mode}")
+          if import_mode == "new_version" and not target_wm_id:
+              raise SystemExit("❌ import_mode=new_version requires target_wm_id")
 
-              print(f"       File: {mai_path.name} ({len(file_bytes)} bytes)")
+          bff = f"{base_url.rstrip('/')}/maisa-bff"
+          if import_mode == "new_version":
+              url = f"{bff}/workers/{target_wm_id}/import"
+              params = {"mode": "newVersion"}
+              form_data = {}
+          else:
+              url = f"{bff}/organizations/{org_id}/workspaces/{ws_id}/workers/import"
+              params = {}
+              form_data = {"workspaceId": ws_id}
 
-              async with httpx.AsyncClient(timeout=TIMEOUT, verify=False, follow_redirects=True) as client:
-                  resp = await client.post(
-                      url,
-                      headers=headers(cookie),
-                      files={"file": (mai_path.name, file_bytes, "application/octet-stream")},
-                      data=form_data,
-                      params=params,
-                  )
-              if resp.status_code >= 400:
-                  raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:300]}")
-              return resp.json() if resp.content else None
+          file_bytes = mai_path.read_bytes()
+          print(f"🌍 Environment:  {environment}")
+          print(f"🔧 Target URL:   {base_url}")
+          print(f"📦 Import mode:  {import_mode}")
+          print(f"📦 File:         {mai_path.name} ({len(file_bytes)} bytes)")
+          print(f"📤 POST {url}")
 
-          async def main():
-              environment  = os.environ["MAISA_ENVIRONMENT"].strip()
-              base_url, cookie = resolve_env(os.environ["MAISA_AUTH_CREDENTIAL"], environment)
-              org_id       = os.environ["TARGET_ORGANIZATION_ID"].strip()
-              ws_id        = os.environ["TARGET_WORKSPACE_ID"].strip()
-              workspace    = os.environ["WORKSPACE_NAME"].strip()
-              snapshot     = os.environ.get("SNAPSHOT", "").strip()
-              import_mode  = os.environ.get("IMPORT_MODE", "new_worker").strip()
-              target_wm_id = os.environ.get("TARGET_WM_ID", "").strip()
+          resp = httpx.post(
+              url,
+              headers={"Cookie": cookie, "User-Agent": "Mozilla/5.0 (compatible; MaisaImporter/1.0)"},
+              files={"file": (mai_path.name, file_bytes, "application/octet-stream")},
+              data=form_data,
+              params=params,
+              timeout=TIMEOUT,
+              verify=False,
+              follow_redirects=True,
+          )
+          if resp.status_code >= 400:
+              raise SystemExit(f"❌ HTTP {resp.status_code}: {resp.text[:300]}")
 
-              if import_mode not in ("new_worker", "new_version"):
-                  raise SystemExit(f"❌ Invalid import_mode: {import_mode}")
-              if import_mode == "new_version" and not target_wm_id:
-                  raise SystemExit("❌ import_mode=new_version requires target_wm_id")
+          body = resp.json() if resp.content else None
+          print(f"📋 Response: {str(body)[:300]}")
 
-              base_dir = Path("agents") / workspace
-              if not base_dir.exists():
-                  raise SystemExit(f"❌ Workspace folder not found: {base_dir}")
-
-              snapshot_dir = pick_snapshot_dir(base_dir, snapshot)
-              files = sorted(snapshot_dir.glob("*.mai"))
-              if not files:
-                  raise SystemExit(f"❌ No .mai files found in {snapshot_dir}")
-
-              print("=" * 60)
-              print("Maisa Agent Import")
-              print("=" * 60)
-              print(f"🌍 Environment:  {environment}")
-              print(f"🔧 Target URL:   {base_url}")
-              print(f"📁 Org ID:       {org_id}")
-              print(f"📁 Workspace ID: {ws_id}")
-              print(f"📦 Git folder:   {workspace}")
-              print(f"📦 Snapshot:     {snapshot_dir.name}")
-              print(f"📦 Import mode:  {import_mode}")
-              print(f"📦 Files:        {len(files)}")
-              print("=" * 60)
-
-              errors: List[str] = []
-              last_wm_id = target_wm_id if import_mode == "new_version" else ""
-
-              for p in files:
-                  print(f"\n  File: {p.name}")
-                  try:
-                      resp = await import_agent(base_url, cookie, org_id, ws_id, p, import_mode, target_wm_id)
-                      print(f"    📋 Response: {str(resp)[:300]}")
-                      wm_id = extract_wm_id(resp) or last_wm_id
-                      if wm_id:
-                          last_wm_id = wm_id
-                          print(f"    🤖 WM ID: {wm_id}")
-                      print(f"    ✅ Done")
-                  except Exception as e:
-                      errors.append(f"{p.name}: {e}")
-                      print(f"    ❌ {e}")
-
-              print("\n" + "=" * 60)
-              print(f"Imported: {len(files) - len(errors)}/{len(files)}")
-              if errors:
-                  for err in errors:
-                      print(f"  ❌ {err}")
-                  raise SystemExit(1)
-
-              if last_wm_id:
-                  with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-                      f.write(f"imported_wm_id={last_wm_id}\n")
-
-          asyncio.run(main())
+          wm_id = extract_wm_id(body) or target_wm_id
+          if wm_id:
+              print(f"🤖 WM ID: {wm_id}")
+              with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                  f.write(f"imported_wm_id={wm_id}\n")
           EOF
-
-  # ---------------------------------------------------------------------------
-  # JOB 3: Post-import QA tests
-  # ---------------------------------------------------------------------------
-  post-import:
-    name: Post-import QA tests
-    runs-on: base-runner
-    needs: [qa-test, import-agents]
-    if: always() && needs.qa-test.result == 'success' && needs.import-agents.result == 'success'
-
-    steps:
-      - name: Checkout development branch (read scripts and dataset)
-        uses: actions/checkout@v4
-        with:
-          ref: development
-          fetch-depth: 1
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install httpx
 
       - name: Run QA tests
         env:
@@ -321,33 +325,51 @@ jobs:
           MAISA_ENVIRONMENT: ${{ inputs.environment }}
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}
-          TEST_WM_ID: ${{ needs.import-agents.outputs.imported_wm_id || inputs.target_wm_id }}
+          TEST_WM_ID: ${{ steps.import.outputs.imported_wm_id || inputs.target_wm_id }}
         shell: bash
         run: |
           if [ ! -f "scripts/qa-dataset.json" ]; then
-            echo "❌ scripts/qa-dataset.json not found. Failing pipeline."
+            echo "❌ scripts/qa-dataset.json not found in the release. Failing pipeline."
             exit 1
           fi
           echo "✅ Running QA tests (TEST_WM_ID=$TEST_WM_ID)..."
           python scripts/qa-test.py
 
-      - name: Check if post-import script exists
-        id: check-post-import
-        shell: bash
-        run: |
-          if [ ! -f "scripts/post_import.py" ]; then
-            echo "exists=false" >> $GITHUB_OUTPUT
-          else
-            echo "exists=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run post-import script
-        if: steps.check-post-import.outputs.exists == 'true'
+      - name: Run post-import script (if present)
         env:
           MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
           MAISA_ENVIRONMENT: ${{ inputs.environment }}
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}
-          TEST_WM_ID: ${{ needs.import-agents.outputs.imported_wm_id || inputs.target_wm_id }}
+          TEST_WM_ID: ${{ steps.import.outputs.imported_wm_id || inputs.target_wm_id }}
+        shell: bash
         run: |
-          python scripts/post_import.py
+          if [ -f "scripts/post_import.py" ]; then
+            python scripts/post_import.py
+          else
+            echo "ℹ️  scripts/post_import.py not found. Skipping."
+          fi
+
+      - name: Mark release as deployed to this environment
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+          MAISA_ENVIRONMENT: ${{ inputs.environment }}
+          SHA256: ${{ steps.asset.outputs.sha256 }}
+          WM_ID: ${{ steps.import.outputs.imported_wm_id }}
+        run: |
+          set -euo pipefail
+          MARKER="$RUNNER_TEMP/deployed-$MAISA_ENVIRONMENT.txt"
+
+          {
+            echo "tag=$TAG"
+            echo "environment=$MAISA_ENVIRONMENT"
+            echo "sha256=$SHA256"
+            echo "worker_manager_id=$WM_ID"
+            echo "deployed_by=$GITHUB_ACTOR"
+            echo "run=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          } > "$MARKER"
+
+          gh release upload "$TAG" "$MARKER" --repo "$GITHUB_REPOSITORY" --clobber
+          echo "✅ $TAG marked as deployed to $MAISA_ENVIRONMENT"
