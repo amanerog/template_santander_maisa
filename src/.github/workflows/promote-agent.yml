@@ -1,14 +1,18 @@
 name: Promote Maisa Agent
 
-# Publishes a release from the source environment (release-agent.yml) and deploys it to pre
-# (import-agents.yml). To promote that same release to pro, run "Import Maisa Agents" with the
-# release tag and environment=pro: it requires a successful pre deployment and manual approval.
+# Tests the agent in the source environment (test-agents.yml), and only if the tests pass publishes
+# a release from it (release-agent.yml) and deploys it to pre (import-agents.yml).
+# To promote that same release to pro, run "Import Maisa Agents" with the release tag and
+# environment=pro: it requires a successful pre deployment and manual approval.
 
 on:
   workflow_dispatch:
     inputs:
       worker_id:
         description: "Worker version ID to export (lastVersionId from the worker manager)"
+        required: true
+      source_wm_id:
+        description: "Worker Manager ID of the agent in the source environment (used to run the QA tests)"
         required: true
       agent_name:
         description: "Agent name used in the release tag (lowercase letters, digits and dashes)"
@@ -42,8 +46,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test-source:
+    name: QA tests in ${{ inputs.source_environment }}
+    uses: ./.github/workflows/test-agents.yml
+    with:
+      test_wm_id: ${{ inputs.source_wm_id }}
+      environment: ${{ inputs.source_environment }}
+    secrets:
+      maisa_auth_credential: ${{ secrets.MAISA_AUTH_CREDENTIAL }}
+
   release:
     name: Release from ${{ inputs.source_environment }}
+    needs: test-source
     uses: ./.github/workflows/release-agent.yml
     with:
       worker_id: ${{ inputs.worker_id }}

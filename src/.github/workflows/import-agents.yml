@@ -3,6 +3,8 @@ name: Import Maisa Agents
 # Imports the .mai attached to a GitHub Release (created by release-agent.yml) into a Maisa environment.
 # A release tag is the only accepted source. The deploy job runs under a GitHub Environment,
 # so reviewers configured on it (mandatory for production) must approve before anything is imported.
+# For pro there is an additional approval job (see "approval" below) that does not depend on
+# repository settings: someone from .github/pro-approvers.txt must run approve-deployment.yml.
 #
 #   dev -> "certification"   pre -> "preproduction"   pro -> "production"
 #
@@ -117,6 +119,11 @@ jobs:
               ;;
           esac
 
+          if [ "$MAISA_ENVIRONMENT" = "pro" ] && [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "❌ Deployments to pro can only run from '$DEFAULT_BRANCH' (running on $GITHUB_REF)."
+            exit 1
+          fi
+
           RELEASE="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,assets)"
 
           if [ "$(jq -r '.isDraft' <<< "$RELEASE")" != "false" ]; then
@@ -182,13 +189,103 @@ jobs:
           echo "✅ QA pre-check passed"
 
   # ---------------------------------------------------------------------------
-  # JOB 3: Approval (GitHub Environment) -> import the release asset -> QA tests
+  # JOB 3 (pro only): waits for a human decision. An approver listed in
+  #        .github/pro-approvers.txt (never the requester) runs approve-deployment.yml
+  #        with this run's ID. Times out and fails if nobody answers.
+  # ---------------------------------------------------------------------------
+  approval:
+    name: Wait for approval
+    if: ${{ inputs.environment == 'pro' }}
+    runs-on: base-runner
+    needs: [validate-release, qa-test]
+    timeout-minutes: 240
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout (read approvers list)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Wait for approval
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+
+          APPROVERS="$(grep -vE '^[[:space:]]*(#|$)' .github/pro-approvers.txt | tr -d ' \r' | tr 'A-Z' 'a-z' || true)"
+          if [ -z "$APPROVERS" ]; then
+            echo "❌ .github/pro-approvers.txt has no approvers. Failing pipeline."
+            exit 1
+          fi
+
+          REQUESTERS="$(printf '%s\n%s\n' "$ACTOR" "$TRIGGERING_ACTOR" | tr 'A-Z' 'a-z')"
+          APPROVE_TITLE="approval-${RUN_ID}-approve"
+          REJECT_TITLE="approval-${RUN_ID}-reject"
+          APPROVE_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/approve-deployment.yml"
+          START="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          {
+            echo "### ⏸ Approval required to deploy \`$TAG\` to pro"
+            echo ""
+            echo "An approver (not \`$ACTOR\`) must run [Approve Maisa Deployment]($APPROVE_URL) with:"
+            echo "- **deploy_run_id:** \`$RUN_ID\`"
+            echo "- **decision:** \`approve\` or \`reject\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "⏸ Waiting for approval of run $RUN_ID (requested by $ACTOR)"
+          echo "   Approve at: $APPROVE_URL  (deploy_run_id=$RUN_ID)"
+
+          while true; do
+            RUNS="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/approve-deployment.yml/runs?event=workflow_dispatch&per_page=100")"
+
+            DECISIONS="$(jq -r --arg s "$START" --arg a "$APPROVE_TITLE" --arg r "$REJECT_TITLE" '
+              .workflow_runs[]
+              | select(.created_at >= $s and .status == "completed" and .conclusion == "success")
+              | select(.display_title == $a or .display_title == $r)
+              | [.display_title, ((.triggering_actor.login // .actor.login) | ascii_downcase)]
+              | @tsv' <<< "$RUNS")"
+
+            APPROVED_BY=""
+            while IFS=$'\t' read -r title login; do
+              [ -z "$title" ] && continue
+              grep -qxF "$login" <<< "$APPROVERS" || continue
+              grep -qxF "$login" <<< "$REQUESTERS" && continue
+              if [ "$title" = "$REJECT_TITLE" ]; then
+                echo "❌ Deployment rejected by $login."
+                exit 1
+              fi
+              APPROVED_BY="$login"
+            done <<< "$DECISIONS"
+
+            if [ -n "$APPROVED_BY" ]; then
+              echo "✅ Approved by $APPROVED_BY."
+              exit 0
+            fi
+
+            sleep 30
+          done
+
+  # ---------------------------------------------------------------------------
+  # JOB 4: GitHub Environment gate -> import the release asset -> QA tests
   #        -> mark the release as deployed to this environment.
   # ---------------------------------------------------------------------------
   deploy:
     name: Deploy ${{ inputs.release_tag }} to ${{ inputs.environment }}
     runs-on: base-runner
-    needs: [validate-release, qa-test]
+    needs: [validate-release, qa-test, approval]
+    if: >-
+      ${{ !cancelled()
+      && needs.validate-release.result == 'success'
+      && needs.qa-test.result == 'success'
+      && (needs.approval.result == 'success' || needs.approval.result == 'skipped') }}
     environment: ${{ needs.validate-release.outputs.gh_environment }}
     permissions:
       contents: write

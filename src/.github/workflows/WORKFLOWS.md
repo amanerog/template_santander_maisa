@@ -87,12 +87,13 @@ Imports the `.mai` of a release into a target environment. The release tag is th
 **Jobs:**
 
 ```
-validate-release → qa-test (pre-check) → deploy  [GitHub Environment approval]
+validate-release → qa-test (pre-check) → approval (pro only) → deploy  [GitHub Environment gate]
 ```
 
 1. **validate-release:** the tag has the expected format, the release is published with exactly one `.mai` and one `.sha256`, the tag belongs to the default-branch history, and for `pro` the release already has `deployed-pre.txt`.
 2. **qa-test:** runs `scripts/qa-test.py` from the tagged commit without credentials — must print `OK`.
-3. **deploy:** waits for approval on the GitHub Environment, downloads the asset, verifies the sha256, imports it, runs the QA dataset and `scripts/post_import.py` (if present) from the tagged commit, and uploads `deployed-<env>.txt` to the release.
+3. **approval (pro only):** waits up to 4 hours for a human decision (see `approve-deployment.yml`). Fails if it is rejected or times out.
+4. **deploy:** waits for the GitHub Environment gate (if configured), downloads the asset, verifies the sha256, imports it, runs the QA dataset and `scripts/post_import.py` (if present) from the tagged commit, and uploads `deployed-<env>.txt` to the release.
 
 **Environment mapping and approvals:**
 
@@ -104,7 +105,31 @@ validate-release → qa-test (pre-check) → deploy  [GitHub Environment approva
 
 Configure them in *Settings → Environments*. For `production`: add required reviewers, enable *Prevent self-review* and restrict deployment branches to the default branch.
 
-> **Note:** approval only protects what runs under the environment. While `MAISA_AUTH_CREDENTIAL` is a single repository secret containing the `pro` cookie, anyone able to run workflows can read it. Move the `pro` credential to an environment secret on `production` to make the gate effective.
+> **Note:** the `approval` job is a provisional gate that does not need repository settings. If an administrator configures required reviewers on the `production` environment, the two gates stack; the `approval` job can then be removed. Approval also does not protect the `pro` credential while `MAISA_AUTH_CREDENTIAL` is a single repository secret containing the `pro` cookie: move it to an environment secret on `production` once that environment can be configured.
+
+---
+
+### `approve-deployment.yml` — Approve a deployment to pro
+
+Registers the decision of an approver for a deployment to pro that is waiting in `import-agents.yml`.
+
+**Trigger:** Manual (`workflow_dispatch`) only.
+
+**Inputs:** `deploy_run_id` (number at the end of the URL of the waiting run, also printed in its summary) and `decision` (`approve` / `reject`).
+
+**Rules:**
+- Only logins listed in `.github/pro-approvers.txt` count. The file lives under `.github/`, so only its code owners can change it.
+- The person who launched the deployment can never approve it.
+- The waiting job re-checks the approver from the list of runs of this workflow, so a run by an unlisted user has no effect.
+- Approvals made before the deployment job started are ignored; re-running the deployment requires a new approval.
+- A `reject` from any valid approver fails the deployment.
+
+**Flow:**
+1. Launch *Import Maisa Agents* with `environment=pro`. The `approval` job prints the run ID and the link to this workflow.
+2. Tell an approver. They run *Approve Maisa Deployment* with that run ID and `approve`.
+3. The `approval` job detects it within 30 seconds and the deployment continues.
+
+The `approval` job occupies a runner while it waits (maximum 4 hours).
 
 ---
 
@@ -118,7 +143,7 @@ Runs the QA test suite against an already-deployed agent without importing anyth
 
 | Input | Required | Description |
 |---|---|---|
-| `release_tag` | Yes | Release tag (`agent-<name>-<YYYYMMDD-HHMMSS>`) whose scripts and dataset are used |
+| `release_tag` | Yes (manual) | Release tag (`agent-<name>-<YYYYMMDD-HHMMSS>`) whose scripts and dataset are used. When called from `promote-agent` it is empty and the scripts of the current default-branch commit are used |
 | `test_wm_id` | Yes | Worker Manager ID of the agent to test |
 | `environment` | Yes | Key in `MAISA_AUTH_CREDENTIAL` |
 | `target_organization_id` | No | Maisa organization ID (only needed when finding agent by name) |
@@ -132,13 +157,17 @@ Runs the QA test suite against an already-deployed agent without importing anyth
 
 ---
 
-### `promote-agent.yml` — Release and deploy to pre
+### `promote-agent.yml` — Test, release and deploy to pre
 
-Chains `release-agent` (from the source environment) and `import-agents` (to `pre`) in one run.
+Chains `test-agents` (QA in the source environment), `release-agent` and `import-agents` (to `pre`) in one run. The release is only created if the QA tests pass in the source environment.
+
+```
+test-source → release → import (pre)
+```
 
 **Trigger:** Manual (`workflow_dispatch`) only.
 
-**Inputs:** `worker_id`, `agent_name`, `source_environment`, `target_organization_id`, `target_workspace_id`, `import_mode`, `target_wm_id`.
+**Inputs:** `worker_id`, `source_wm_id` (Worker Manager ID in the source environment, used by the QA tests), `agent_name`, `source_environment`, `target_organization_id`, `target_workspace_id`, `import_mode`, `target_wm_id`.
 
 **Promoting to pro:** run **Import Maisa Agents** with the same `release_tag` and `environment=pro`. The same artifact tested in pre is deployed, after a reviewer approves the `production` environment. Nothing is re-exported.
 

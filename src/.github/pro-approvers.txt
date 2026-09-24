@@ -1,0 +1,6 @@
+# GitHub logins allowed to approve deployments to pro (one per line, case-insensitive).
+# This file lives under .github/, so it is only changeable by the code owners of that folder.
+# The person who launches a deployment can never approve it.
+#
+# example-login
+X637800-sgt_sangroup
