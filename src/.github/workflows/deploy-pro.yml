@@ -1,0 +1,147 @@
+name: Deploy PRO
+
+# Step 2 of deploying a release to pro. Runs when a deployment request created by
+# request-pro-deployment.yml is merged into the default branch. The approval is the pull request:
+# it is only accepted if an approver from .github/pro-approvers.txt approved the final commit of
+# a merged PR that added exactly one deployments/pro/*.json file.
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - "deployments/pro/**"
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: maisa-deploy-pro
+  cancel-in-progress: false
+
+jobs:
+  verify-approval:
+    name: Verify pull request approval
+    runs-on: base-runner
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      release_tag: ${{ steps.verify.outputs.release_tag }}
+      target_organization_id: ${{ steps.verify.outputs.target_organization_id }}
+      target_workspace_id: ${{ steps.verify.outputs.target_workspace_id }}
+      import_mode: ${{ steps.verify.outputs.import_mode }}
+      target_wm_id: ${{ steps.verify.outputs.target_wm_id }}
+
+    steps:
+      - name: Checkout merged commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Verify approval and read request
+        id: verify
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          REPO="$GITHUB_REPOSITORY"
+
+          fail() { echo "❌ $*"; exit 1; }
+          lower() { tr 'A-Z' 'a-z'; }
+
+          [ "$GITHUB_REF" = "refs/heads/$DEFAULT_BRANCH" ] || fail "Only the default branch can deploy to pro."
+
+          PRS="$(gh api "repos/$REPO/commits/$GITHUB_SHA/pulls")"
+          PR_NUMBER="$(jq -r --arg base "$DEFAULT_BRANCH" \
+            '[.[] | select(.merged_at != null and .base.ref == $base)] | first | .number // empty' <<< "$PRS")"
+          [ -n "$PR_NUMBER" ] || fail "Commit $GITHUB_SHA was not merged through a pull request."
+
+          PR="$(gh api "repos/$REPO/pulls/$PR_NUMBER")"
+          AUTHOR="$(jq -r '.user.login' <<< "$PR" | lower)"
+          HEAD_SHA="$(jq -r '.head.sha' <<< "$PR")"
+          echo "🔎 Pull request #$PR_NUMBER by $AUTHOR (head $HEAD_SHA)"
+
+          # The PR must add exactly one deployment request and nothing else.
+          FILES="$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[] | [.status, .filename] | @tsv')"
+          [ "$(wc -l <<< "$FILES" | tr -d ' ')" = "1" ] || fail "The PR must change exactly one file. Changed:
+          $FILES"
+          STATUS="$(cut -f1 <<< "$FILES")"
+          FILE="$(cut -f2 <<< "$FILES")"
+          [ "$STATUS" = "added" ] || fail "Deployment requests can only be added, not $STATUS ($FILE)."
+          [[ "$FILE" =~ ^deployments/pro/[A-Za-z0-9._-]+\.json$ ]] || fail "Unexpected file in PR: $FILE"
+
+          APPROVERS="$(grep -vE '^[[:space:]]*(#|$)' .github/pro-approvers.txt | tr -d ' \r' | lower || true)"
+          [ -n "$APPROVERS" ] || fail ".github/pro-approvers.txt has no approvers."
+
+          # Latest decisive review of each reviewer.
+          REVIEWS="$(gh api "repos/$REPO/pulls/$PR_NUMBER/reviews" --paginate | jq -s 'add // []')"
+          LATEST="$(jq -r --arg head "$HEAD_SHA" '
+            map(select(.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED"))
+            | group_by(.user.login | ascii_downcase)
+            | map(sort_by(.submitted_at) | last)
+            | .[] | [(.user.login | ascii_downcase), .state, ((.commit_id == $head) | tostring)] | @tsv' <<< "$REVIEWS")"
+
+          APPROVED_BY=""
+          while IFS=$'\t' read -r login state current; do
+            [ -z "$login" ] && continue
+            grep -qxF "$login" <<< "$APPROVERS" || continue
+            [ "$login" = "$AUTHOR" ] && continue
+            if [ "$state" = "CHANGES_REQUESTED" ]; then
+              fail "$login requested changes on PR #$PR_NUMBER."
+            fi
+            if [ "$state" = "APPROVED" ] && [ "$current" = "true" ]; then
+              APPROVED_BY="$login"
+            fi
+          done <<< "$LATEST"
+
+          [ -n "$APPROVED_BY" ] || fail "PR #$PR_NUMBER has no approval on its final commit from a user in .github/pro-approvers.txt (other than its author)."
+          echo "✅ Approved by $APPROVED_BY (requested by $AUTHOR)"
+
+          # Read and validate the request.
+          REQ="$(cat "$FILE")"
+          TAG="$(jq -r '.release_tag // empty' <<< "$REQ")"
+          ORG_ID="$(jq -r '.target_organization_id // empty' <<< "$REQ")"
+          WS_ID="$(jq -r '.target_workspace_id // empty' <<< "$REQ")"
+          MODE="$(jq -r '.import_mode // empty' <<< "$REQ")"
+          WM_ID="$(jq -r '.target_wm_id // empty' <<< "$REQ")"
+
+          [[ "$TAG" =~ ^agent-[a-z0-9]+(-[a-z0-9]+)*-[0-9]{8}-[0-9]{6}$ ]] || fail "Invalid release_tag in $FILE."
+          [[ "$ORG_ID" =~ ^[A-Za-z0-9_-]+$ ]] || fail "Invalid target_organization_id in $FILE."
+          [[ "$WS_ID" =~ ^[A-Za-z0-9_-]+$ ]] || fail "Invalid target_workspace_id in $FILE."
+          [ "$MODE" = "new_worker" ] || [ "$MODE" = "new_version" ] || fail "Invalid import_mode in $FILE."
+          [[ "$WM_ID" =~ ^[A-Za-z0-9_-]*$ ]] || fail "Invalid target_wm_id in $FILE."
+          if [ "$MODE" = "new_version" ] && [ -z "$WM_ID" ]; then fail "import_mode=new_version requires target_wm_id."; fi
+
+          {
+            echo "release_tag=$TAG"
+            echo "target_organization_id=$ORG_ID"
+            echo "target_workspace_id=$WS_ID"
+            echo "import_mode=$MODE"
+            echo "target_wm_id=$WM_ID"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Deploying \`$TAG\` to pro"
+            echo "- Pull request: #$PR_NUMBER (requested by \`$AUTHOR\`)"
+            echo "- Approved by: \`$APPROVED_BY\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy ${{ needs.verify-approval.outputs.release_tag }} to pro
+    needs: verify-approval
+    uses: ./.github/workflows/import-agents.yml
+    permissions:
+      contents: write
+    with:
+      release_tag: ${{ needs.verify-approval.outputs.release_tag }}
+      target_organization_id: ${{ needs.verify-approval.outputs.target_organization_id }}
+      target_workspace_id: ${{ needs.verify-approval.outputs.target_workspace_id }}
+      environment: pro
+      import_mode: ${{ needs.verify-approval.outputs.import_mode }}
+      target_wm_id: ${{ needs.verify-approval.outputs.target_wm_id }}
+    secrets:
+      maisa_auth_credential: ${{ secrets.MAISA_AUTH_CREDENTIAL }}

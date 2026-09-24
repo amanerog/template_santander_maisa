@@ -1,0 +1,132 @@
+name: Request PRO Deployment
+
+# Step 1 of deploying a release to pro. Validates the release and pushes a branch with a deployment
+# request file (deployments/pro/<id>.json). Open the pull request from the link in the run summary:
+# once an approver from .github/pro-approvers.txt approves it and it is merged into the default
+# branch, deploy-pro.yml deploys the release to pro.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag to deploy (agent-<name>-<YYYYMMDD-HHMMSS>), already deployed to pre"
+        required: true
+      target_organization_id:
+        description: "Target Maisa organization ID (pro)"
+        required: true
+      target_workspace_id:
+        description: "Target Maisa workspace ID (pro)"
+        required: true
+      import_mode:
+        description: "new_worker = new worker in workspace; new_version = new version of existing worker"
+        required: false
+        default: "new_worker"
+        type: choice
+        options:
+          - "new_worker"
+          - "new_version"
+      target_wm_id:
+        description: "Worker Manager ID in pro to create a new version of (only if import_mode=new_version)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  request:
+    name: Create deployment request
+    runs-on: base-runner
+
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Validate request and push branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+          ORG_ID: ${{ inputs.target_organization_id }}
+          WS_ID: ${{ inputs.target_workspace_id }}
+          IMPORT_MODE: ${{ inputs.import_mode }}
+          TARGET_WM_ID: ${{ inputs.target_wm_id }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+
+          if [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "❌ Requests can only be created from '$DEFAULT_BRANCH' (running on $GITHUB_REF)."
+            exit 1
+          fi
+
+          if [[ ! "$TAG" =~ ^agent-[a-z0-9]+(-[a-z0-9]+)*-[0-9]{8}-[0-9]{6}$ ]]; then
+            echo "❌ '$TAG' is not an agent release tag (agent-<name>-<YYYYMMDD-HHMMSS>)."
+            exit 1
+          fi
+          if [[ ! "$ORG_ID" =~ ^[A-Za-z0-9_-]+$ ]] || [[ ! "$WS_ID" =~ ^[A-Za-z0-9_-]+$ ]]; then
+            echo "❌ Organization and workspace IDs may only contain letters, digits, '_' and '-'."
+            exit 1
+          fi
+          if [ "$IMPORT_MODE" != "new_worker" ] && [ "$IMPORT_MODE" != "new_version" ]; then
+            echo "❌ Invalid import_mode: $IMPORT_MODE"
+            exit 1
+          fi
+          if [[ ! "$TARGET_WM_ID" =~ ^[A-Za-z0-9_-]*$ ]]; then
+            echo "❌ target_wm_id may only contain letters, digits, '_' and '-'."
+            exit 1
+          fi
+          if [ "$IMPORT_MODE" = "new_version" ] && [ -z "$TARGET_WM_ID" ]; then
+            echo "❌ import_mode=new_version requires target_wm_id."
+            exit 1
+          fi
+
+          RELEASE="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,assets)"
+          if [ "$(jq -r '.isDraft' <<< "$RELEASE")" != "false" ]; then
+            echo "❌ Release $TAG is a draft."
+            exit 1
+          fi
+          if ! jq -e '.assets[] | select(.name == "deployed-pre.txt")' <<< "$RELEASE" > /dev/null; then
+            echo "❌ Release $TAG has not been deployed and tested in pre (missing deployed-pre.txt)."
+            exit 1
+          fi
+
+          ID="$(date -u +'%Y%m%d-%H%M%S')-$TAG"
+          BRANCH="deploy/pro/$ID"
+          FILE="deployments/pro/$ID.json"
+
+          mkdir -p deployments/pro
+          jq -n \
+            --arg release_tag "$TAG" \
+            --arg org "$ORG_ID" \
+            --arg ws "$WS_ID" \
+            --arg mode "$IMPORT_MODE" \
+            --arg wm "$TARGET_WM_ID" \
+            --arg by "$GITHUB_ACTOR" \
+            '{release_tag: $release_tag, target_organization_id: $org, target_workspace_id: $ws,
+              import_mode: $mode, target_wm_id: $wm, requested_by: $by}' > "$FILE"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add "$FILE"
+          git commit -m "chore(maisa): request deployment of $TAG to pro"
+          git push origin "$BRANCH"
+
+          TITLE="Deploy $TAG to PRO"
+          BODY="Release: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG
+          Requested by: @$GITHUB_ACTOR
+          Approving and merging this pull request deploys the release to pro."
+          URL="$(python3 -c 'import sys, urllib.parse as u; print(u.quote(sys.argv[1]), u.quote(sys.argv[2]))' "$TITLE" "$BODY")"
+          NEW_PR="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/$DEFAULT_BRANCH...$BRANCH?expand=1&title=${URL%% *}&body=${URL#* }"
+
+          {
+            echo "### Deployment request created for \`$TAG\`"
+            echo ""
+            echo "1. [Open the pull request]($NEW_PR)"
+            echo "2. An approver from \`.github/pro-approvers.txt\` (not you) approves it"
+            echo "3. Merge it: \`deploy-pro.yml\` deploys the release to pro"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "✅ Branch $BRANCH pushed. Open the PR: $NEW_PR"
