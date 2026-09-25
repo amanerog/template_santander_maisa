@@ -19,28 +19,6 @@ on:
         description: "Target Maisa workspace ID (only needed when finding agent by name)"
         required: false
 
-  workflow_call:
-    inputs:
-      release_tag:
-        description: "Empty = use the scripts of the current default-branch commit (tests before a release exists)"
-        required: false
-        type: string
-      test_wm_id:
-        required: true
-        type: string
-      environment:
-        required: true
-        type: string
-      target_organization_id:
-        required: false
-        type: string
-      target_workspace_id:
-        required: false
-        type: string
-    secrets:
-      maisa_auth_credential:
-        required: true
-
 permissions:
   contents: read
 
@@ -54,14 +32,8 @@ jobs:
         shell: bash
         env:
           TAG: ${{ inputs.release_tag }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          if [ -z "$TAG" ]; then
-            if [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
-              echo "❌ Without a release tag the tests can only run from '$DEFAULT_BRANCH' (running on $GITHUB_REF)."
-              exit 1
-            fi
-          elif [[ ! "$TAG" =~ ^agent-[a-z0-9]+(-[a-z0-9]+)*-[0-9]{8}-[0-9]{6}$ ]]; then
+          if [[ ! "$TAG" =~ ^agent-[a-z0-9]+(-[a-z0-9]+)*-[0-9]{8}-[0-9]{6}$ ]]; then
             echo "❌ '$TAG' is not an agent release tag (agent-<name>-<YYYYMMDD-HHMMSS>)."
             exit 1
           fi
@@ -69,7 +41,7 @@ jobs:
       - name: Checkout release tag (read scripts and dataset)
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.release_tag && format('refs/tags/{0}', inputs.release_tag) || github.sha }}
+          ref: refs/tags/${{ inputs.release_tag }}
           fetch-depth: 1
 
       - name: Install dependencies
@@ -79,7 +51,7 @@ jobs:
 
       - name: Run QA tests
         env:
-          MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
+          MAISA_AUTH_CREDENTIAL: ${{ secrets.MAISA_AUTH_CREDENTIAL }}
           MAISA_ENVIRONMENT: ${{ inputs.environment }}
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}
@@ -106,7 +78,7 @@ jobs:
       - name: Run post-import script
         if: steps.check-post-import.outputs.exists == 'true'
         env:
-          MAISA_AUTH_CREDENTIAL: ${{ secrets.maisa_auth_credential || secrets.MAISA_AUTH_CREDENTIAL }}
+          MAISA_AUTH_CREDENTIAL: ${{ secrets.MAISA_AUTH_CREDENTIAL }}
           MAISA_ENVIRONMENT: ${{ inputs.environment }}
           ORGANIZATION_ID: ${{ inputs.target_organization_id }}
           WORKSPACE_ID: ${{ inputs.target_workspace_id }}

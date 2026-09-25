@@ -1,24 +1,15 @@
 name: Promote Maisa Agent
 
-# Tests the agent in the source environment (test-agents.yml), and only if the tests pass publishes
-# a release from it (release-agent.yml) and deploys it to pre (import-agents.yml).
-# To promote that same release to pro, run "Import Maisa Agents" with the release tag and
-# environment=pro: it requires a successful pre deployment and manual approval.
+# Publishes a release from dev (release-agent.yml) and deploys it to pre (import-agents.yml), where the
+# QA tests run. The agent name comes from scripts/qa-dataset.json.
+# To promote that same release to pro, run "Request PRO Deployment" with the release tag: it requires a
+# successful pre deployment and an approved pull request.
 
 on:
   workflow_dispatch:
     inputs:
       worker_id:
         description: "Worker version ID to export (lastVersionId from the worker manager)"
-        required: true
-      source_wm_id:
-        description: "Worker Manager ID of the agent in the source environment (used to run the QA tests)"
-        required: true
-      agent_name:
-        description: "Agent name used in the release tag (lowercase letters, digits and dashes)"
-        required: true
-      source_environment:
-        description: "Source environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. dev)"
         required: true
       target_organization_id:
         description: "Target Maisa organization ID (pre)"
@@ -42,27 +33,52 @@ permissions:
   contents: write
 
 concurrency:
-  group: maisa-promote-${{ inputs.agent_name }}
+  group: maisa-promote
   cancel-in-progress: false
 
 jobs:
-  test-source:
-    name: QA tests in ${{ inputs.source_environment }}
-    uses: ./.github/workflows/test-agents.yml
-    with:
-      test_wm_id: ${{ inputs.source_wm_id }}
-      environment: ${{ inputs.source_environment }}
-    secrets:
-      maisa_auth_credential: ${{ secrets.MAISA_AUTH_CREDENTIAL }}
+  prepare:
+    name: Read agent name
+    runs-on: base-runner
+    outputs:
+      agent_name: ${{ steps.name.outputs.agent_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Read agent name from qa-dataset.json
+        id: name
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ ! -f "scripts/qa-dataset.json" ]; then
+            echo "❌ scripts/qa-dataset.json not found."
+            exit 1
+          fi
+
+          NAME="$(jq -r '.agent_name // empty' scripts/qa-dataset.json)"
+          SLUG="$(printf '%s' "$NAME" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
+
+          if [ -z "$SLUG" ] || [ "$NAME" = "YOUR_WORKER_NAME_HERE" ]; then
+            echo "❌ Set 'agent_name' in scripts/qa-dataset.json (found: '$NAME')."
+            exit 1
+          fi
+
+          echo "🤖 Agent: $NAME -> $SLUG"
+          echo "agent_name=$SLUG" >> "$GITHUB_OUTPUT"
 
   release:
-    name: Release from ${{ inputs.source_environment }}
-    needs: test-source
+    name: Release from dev
+    needs: prepare
     uses: ./.github/workflows/release-agent.yml
     with:
       worker_id: ${{ inputs.worker_id }}
-      agent_name: ${{ inputs.agent_name }}
-      environment: ${{ inputs.source_environment }}
+      agent_name: ${{ needs.prepare.outputs.agent_name }}
+      environment: dev
     secrets:
       maisa_auth_credential: ${{ secrets.MAISA_AUTH_CREDENTIAL }}
 

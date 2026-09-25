@@ -34,6 +34,23 @@ Each environment key maps to the base URL and the full browser cookie string for
 
 ---
 
+## Which workflows run by hand
+
+| Workflow | Who starts it | Manual |
+|---|---|---|
+| `promote-agent.yml` | Developer | Yes: release from dev and deployment (with QA tests) to pre |
+| `request-pro-deployment.yml` | Developer | Yes: creates the deployment request for pro |
+| `test-agents.yml` | Developer | Yes: re-run the QA tests of a release |
+| `update-component-workflow.yml` | Developer | Yes: updates the Gluon reusable workflows |
+| `deploy-pro.yml` | Merge of the approved pull request | No (`push` only; it cannot be started from the UI) |
+| `release-agent.yml` | `promote-agent.yml` | No (`workflow_call` only) |
+| `import-agents.yml` | `promote-agent.yml` and `deploy-pro.yml` | No (`workflow_call` only) |
+| `cd.yml`, `create-release-branch.yml` | Gluon (AWS), unrelated to Maisa | Yes |
+
+GitHub cannot hide a workflow from the Actions tab. `deploy-pro.yml` stays listed but has no *Run workflow* button, and the `workflow_call` workflows do not offer one either.
+
+---
+
 ## Branch Structure
 
 | Branch | Purpose |
@@ -48,7 +65,7 @@ Each environment key maps to the base URL and the full browser cookie string for
 
 Exports one agent from a source environment and publishes it as a GitHub Release. This is the only way an agent can enter the promotion chain.
 
-**Trigger:** Manual (`workflow_dispatch`) or called from another workflow. Only runs from the default branch.
+**Trigger:** Called from `promote-agent.yml` only (not runnable by hand, so a release can never skip the QA tests in the source environment). Only runs from the default branch.
 
 **Inputs:** `worker_id` (version ID to export), `agent_name` (lowercase, digits and dashes), `environment` (source key in `MAISA_AUTH_CREDENTIAL`).
 
@@ -64,7 +81,7 @@ Exports one agent from a source environment and publishes it as a GitHub Release
 
 Imports the `.mai` of a release into a target environment. The release tag is the only accepted source.
 
-**Trigger:** Manual (`workflow_dispatch`) or called from another workflow.
+**Trigger:** Called from `promote-agent.yml` (pre) and `deploy-pro.yml` (pro) only. It is not runnable by hand.
 
 **Inputs:**
 
@@ -73,7 +90,7 @@ Imports the `.mai` of a release into a target environment. The release tag is th
 | `release_tag` | Yes | `agent-<name>-<YYYYMMDD-HHMMSS>` |
 | `target_organization_id` | Yes | Target Maisa organization ID |
 | `target_workspace_id` | Yes | Target Maisa workspace ID |
-| `environment` | Yes | `dev` or `pre` when run manually (key in `MAISA_AUTH_CREDENTIAL`). `pro` is only accepted when called from `deploy-pro.yml` |
+| `environment` | Yes | Key in `MAISA_AUTH_CREDENTIAL`. `pro` is only accepted when called from `deploy-pro.yml` |
 | `import_mode` | No | `new_worker` (default) or `new_version` |
 | `target_wm_id` | No | Worker Manager ID to update (only if `import_mode=new_version`) |
 
@@ -130,6 +147,8 @@ Step 2. Runs on every push to the default branch that touches `deployments/pro/*
 
 The workflow does not check who approved: it relies on GitHub enforcing the code owner rule. If that rule is removed from the branch, `reviewDecision` stops being `APPROVED` and pro deployments stop (they fail closed).
 
+- The request has not been deployed before: after a successful deployment the release receives the asset `deployed-pro-<request id>.txt`, so *Re-run all jobs* on a finished run is rejected. To deploy the same release again (for example a rollback), create a new request. A failed run can still be re-run, for instance after refreshing an expired cookie.
+
 Otherwise the run fails and nothing is deployed. If the checks pass, it calls `import-agents.yml` with `environment=pro` (validation, QA pre-check, import, QA tests, `deployed-pro.txt`).
 
 Anyone can merge; only a code owner approval unlocks the merge. `CODEOWNERS` is under `.github/`, so users cannot change who the owners are.
@@ -140,13 +159,13 @@ Anyone can merge; only a code owner approval unlocks the merge. `CODEOWNERS` is 
 
 Runs the QA test suite against an already-deployed agent without importing anything. Use this to validate an existing agent or re-run tests after a manual change.
 
-**Trigger:** Manual (`workflow_dispatch`) or called from another workflow.
+**Trigger:** Manual (`workflow_dispatch`) only.
 
 **Inputs:**
 
 | Input | Required | Description |
 |---|---|---|
-| `release_tag` | Yes (manual) | Release tag (`agent-<name>-<YYYYMMDD-HHMMSS>`) whose scripts and dataset are used. When called from `promote-agent` it is empty and the scripts of the current default-branch commit are used |
+| `release_tag` | Yes | Release tag (`agent-<name>-<YYYYMMDD-HHMMSS>`) whose scripts and dataset are used |
 | `test_wm_id` | Yes | Worker Manager ID of the agent to test |
 | `environment` | Yes | Key in `MAISA_AUTH_CREDENTIAL` |
 | `target_organization_id` | No | Maisa organization ID (only needed when finding agent by name) |
@@ -160,21 +179,23 @@ Runs the QA test suite against an already-deployed agent without importing anyth
 
 ---
 
-### `promote-agent.yml` — Test, release and deploy to pre
+### `promote-agent.yml` — Release and deploy to pre
 
-Chains `test-agents` (QA in the source environment), `release-agent` and `import-agents` (to `pre`) in one run. The release is only created if the QA tests pass in the source environment.
+Chains `release-agent` (from `dev`) and `import-agents` (to `pre`) in one run. The QA tests run in pre, as part of the deployment; a release that fails them never gets `deployed-pre.txt` and cannot go to pro.
 
 ```
-test-source → release → import (pre)
+prepare → release (dev) → import (pre: validation, QA pre-check, import, QA tests)
 ```
 
 **Trigger:** Manual (`workflow_dispatch`) only.
 
-**Inputs:** `worker_id`, `source_wm_id` (Worker Manager ID in the source environment, used by the QA tests), `agent_name`, `source_environment`, `target_organization_id`, `target_workspace_id`, `import_mode`, `target_wm_id`.
+**Inputs:** `worker_id` (version ID to export from dev), `target_organization_id`, `target_workspace_id` (pre), `import_mode`, `target_wm_id`.
+
+Fixed by design: source environment `dev`, target environment `pre`. The agent name (used in the tag and asset names) is read from `agent_name` in `scripts/qa-dataset.json` and turned into lowercase letters, digits and dashes (`My Worker` → `my-worker`; accented characters are dropped). The run fails if it is missing or still the placeholder `YOUR_WORKER_NAME_HERE`. It assumes one agent per repository.
 
 **Promoting to pro:** run **Request PRO Deployment** with the same `release_tag`, open the pull request, get it approved and merge it. The same artifact tested in pre is deployed and nothing is re-exported.
 
-A `concurrency` group on `agent_name` prevents parallel promotions of the same agent.
+Only one promotion runs at a time (`concurrency` group).
 
 ---
 

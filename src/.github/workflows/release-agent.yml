@@ -4,20 +4,9 @@ name: Release Maisa Agent
 #   tag:    agent-<agent_name>-<YYYYMMDD-HHMMSS>   (created on the current default-branch commit)
 #   assets: <agent_name>.mai + <agent_name>.mai.sha256
 # import-agents.yml only accepts one of these releases as its source.
+# Not runnable by hand: it is only called from promote-agent.yml, after the QA tests in the source environment.
 
 on:
-  workflow_dispatch:
-    inputs:
-      worker_id:
-        description: "Worker version ID to export (lastVersionId from the worker manager)"
-        required: true
-      agent_name:
-        description: "Agent name used in the tag and asset name (lowercase letters, digits and dashes)"
-        required: true
-      environment:
-        description: "Source environment key in MAISA_AUTH_CREDENTIAL JSON (e.g. dev)"
-        required: true
-
   workflow_call:
     inputs:
       worker_id:

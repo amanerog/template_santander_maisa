@@ -34,6 +34,7 @@ jobs:
       target_workspace_id: ${{ steps.verify.outputs.target_workspace_id }}
       import_mode: ${{ steps.verify.outputs.import_mode }}
       target_wm_id: ${{ steps.verify.outputs.target_wm_id }}
+      request_id: ${{ steps.verify.outputs.request_id }}
 
     steps:
       - name: Checkout merged commit
@@ -132,7 +133,15 @@ jobs:
           [[ "$WM_ID" =~ ^[A-Za-z0-9_-]*$ ]] || fail "Invalid target_wm_id in $FILE."
           if [ "$MODE" = "new_version" ] && [ -z "$WM_ID" ]; then fail "import_mode=new_version requires target_wm_id."; fi
 
+          # A request can be deployed only once (blocks "Re-run all jobs" on a finished run).
+          REQUEST_ID="$(basename "$FILE" .json)"
+          ASSETS="$(gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[].name')"
+          if grep -qx "deployed-pro-$REQUEST_ID.txt" <<< "$ASSETS"; then
+            fail "Request $REQUEST_ID was already deployed. Create a new request to deploy again."
+          fi
+
           {
+            echo "request_id=$REQUEST_ID"
             echo "release_tag=$TAG"
             echo "target_organization_id=$ORG_ID"
             echo "target_workspace_id=$WS_ID"
@@ -161,3 +170,27 @@ jobs:
       target_wm_id: ${{ needs.verify-approval.outputs.target_wm_id }}
     secrets:
       maisa_auth_credential: ${{ secrets.MAISA_AUTH_CREDENTIAL }}
+
+  mark-done:
+    name: Mark request as deployed
+    needs: [verify-approval, deploy]
+    runs-on: base-runner
+    permissions:
+      contents: write
+    steps:
+      - name: Upload marker to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.verify-approval.outputs.release_tag }}
+          REQUEST_ID: ${{ needs.verify-approval.outputs.request_id }}
+        run: |
+          set -euo pipefail
+          MARKER="$RUNNER_TEMP/deployed-pro-$REQUEST_ID.txt"
+          {
+            echo "request=$REQUEST_ID"
+            echo "tag=$TAG"
+            echo "commit=$GITHUB_SHA"
+            echo "run=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          } > "$MARKER"
+          gh release upload "$TAG" "$MARKER" --repo "$GITHUB_REPOSITORY" --clobber

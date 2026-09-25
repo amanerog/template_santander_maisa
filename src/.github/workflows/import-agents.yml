@@ -3,6 +3,7 @@ name: Import Maisa Agents
 # Imports the .mai attached to a GitHub Release (created by release-agent.yml) into a Maisa environment.
 # A release tag is the only accepted source. The deploy job runs under a GitHub Environment,
 # so reviewers configured on it (mandatory for production) must approve before anything is imported.
+# Not runnable by hand: it is called from promote-agent.yml (pre) and deploy-pro.yml (pro).
 # Deployments to pro are only accepted when called from deploy-pro.yml (push event), i.e. after an
 # approved pull request created by request-pro-deployment.yml has been merged.
 #
@@ -12,36 +13,6 @@ name: Import Maisa Agents
 # (marker asset deployed-pre.txt, written at the end of a successful pre run).
 
 on:
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: "Release tag to deploy (agent-<name>-<YYYYMMDD-HHMMSS>)"
-        required: true
-      target_organization_id:
-        description: "Target Maisa organization ID"
-        required: true
-      target_workspace_id:
-        description: "Target Maisa workspace ID"
-        required: true
-      environment:
-        description: "Target environment key in MAISA_AUTH_CREDENTIAL JSON (pro is deployed with Request PRO Deployment)"
-        required: true
-        type: choice
-        options:
-          - "dev"
-          - "pre"
-      import_mode:
-        description: "new_worker = new worker in workspace; new_version = new version of existing worker"
-        required: false
-        default: "new_worker"
-        type: choice
-        options:
-          - "new_worker"
-          - "new_version"
-      target_wm_id:
-        description: "Worker Manager ID to create a new version of (only if import_mode=new_version)"
-        required: false
-
   workflow_call:
     inputs:
       release_tag:
