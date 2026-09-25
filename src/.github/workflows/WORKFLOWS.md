@@ -122,20 +122,17 @@ Step 1 to deploy a release to pro. Only from the default branch.
 
 Step 2. Runs on every push to the default branch that touches `deployments/pro/**`, i.e. when the request pull request is merged.
 
-**Approval rules** (checked by the workflow, independent of branch protection):
+**Approval rules** (checked by the workflow, on top of branch protection):
 - The commit comes from a merged pull request.
 - The pull request adds exactly one file, `deployments/pro/*.json`, and nothing else.
-- An `APPROVED` review on the **final** commit of the pull request comes from a code owner of the request file, and that person is not the author.
-- No code owner has a pending `CHANGES_REQUESTED`.
+- GitHub reports the pull request as `APPROVED` (`reviewDecision`). The branch rules require a review from the code owners (`CODEOWNERS`: the team the PR is assigned to), so only their approval produces `APPROVED`. A merge that used *bypass rules*, or an approval from someone who is not a code owner, leaves it as `REVIEW_REQUIRED` and is rejected.
+- Every reviewer's latest approval is on the **final** commit of the pull request (a commit pushed after an approval requires approving again), at least one approval is not the author's, and nobody has a pending `CHANGES_REQUESTED`.
 
-**Who is a code owner:** the workflow reads `CODEOWNERS` (`.github/`, root or `docs/`) and takes the owners of `deployments/pro/<file>.json` (last matching line wins). Nothing is hardcoded, so it follows each repository. A reviewer counts if:
-1. they are listed as a user owner, or
-2. their review was made *on behalf of* an owner team (GitHub records this when the team was requested as reviewer, which CODEOWNERS does automatically when the PR is opened), or
-3. optionally, the secret `MAISA_TEAM_READ_TOKEN` exists (a token with `read:org`, authorized for SSO) and the API confirms they are an active member of an owner team. This is a fallback in case 2 is not reported.
+The workflow does not check who approved: it relies on GitHub enforcing the code owner rule. If that rule is removed from the branch, `reviewDecision` stops being `APPROVED` and pro deployments stop (they fail closed).
 
 Otherwise the run fails and nothing is deployed. If the checks pass, it calls `import-agents.yml` with `environment=pro` (validation, QA pre-check, import, QA tests, `deployed-pro.txt`).
 
-Anyone can merge; only a code owner can approve. `CODEOWNERS` is under `.github/`, so users cannot change who the owners are.
+Anyone can merge; only a code owner approval unlocks the merge. `CODEOWNERS` is under `.github/`, so users cannot change who the owners are.
 
 ---
 
