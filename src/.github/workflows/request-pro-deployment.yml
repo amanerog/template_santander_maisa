@@ -2,7 +2,7 @@ name: Request PRO Deployment
 
 # Step 1 of deploying a release to pro. Validates the release and pushes a branch with a deployment
 # request file (deployments/pro/<id>.json). Open the pull request from the link in the run summary:
-# once an approver from .github/pro-approvers.txt approves it and it is merged into the default
+# once a code owner of the request file (CODEOWNERS) approves it and it is merged into the default
 # branch, deploy-pro.yml deploys the release to pro.
 
 on:
@@ -125,7 +125,7 @@ jobs:
             echo "### Deployment request created for \`$TAG\`"
             echo ""
             echo "1. [Open the pull request]($NEW_PR)"
-            echo "2. An approver from \`.github/pro-approvers.txt\` (not you) approves it"
+            echo "2. An approver (not you) approves it"
             echo "3. Merge it: \`deploy-pro.yml\` deploys the release to pro"
           } >> "$GITHUB_STEP_SUMMARY"
 

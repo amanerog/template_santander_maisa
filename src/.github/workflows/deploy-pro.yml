@@ -2,8 +2,8 @@ name: Deploy PRO
 
 # Step 2 of deploying a release to pro. Runs when a deployment request created by
 # request-pro-deployment.yml is merged into the default branch. The approval is the pull request:
-# it is only accepted if an approver from .github/pro-approvers.txt approved the final commit of
-# a merged PR that added exactly one deployments/pro/*.json file.
+# it is only accepted if a code owner of the request file (CODEOWNERS: a listed user or a member of
+# a listed team) approved the final commit of a merged PR that added exactly one deployments/pro/*.json.
 
 on:
   push:
@@ -46,6 +46,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          # Optional. Token with read:org (SSO-authorized) used only as a fallback to check team membership.
+          TEAM_TOKEN: ${{ secrets.MAISA_TEAM_READ_TOKEN }}
         run: |
           set -euo pipefail
           REPO="$GITHUB_REPOSITORY"
@@ -74,22 +76,94 @@ jobs:
           [ "$STATUS" = "added" ] || fail "Deployment requests can only be added, not $STATUS ($FILE)."
           [[ "$FILE" =~ ^deployments/pro/[A-Za-z0-9._-]+\.json$ ]] || fail "Unexpected file in PR: $FILE"
 
-          APPROVERS="$(grep -vE '^[[:space:]]*(#|$)' .github/pro-approvers.txt | tr -d ' \r' | lower || true)"
-          [ -n "$APPROVERS" ] || fail ".github/pro-approvers.txt has no approvers."
+          # Owners of the request file according to CODEOWNERS (last matching line wins).
+          OWNERS="$(python3 - "$FILE" <<'PY'
+          import fnmatch, pathlib, sys
 
-          # Latest decisive review of each reviewer.
-          REVIEWS="$(gh api "repos/$REPO/pulls/$PR_NUMBER/reviews" --paginate | jq -s 'add // []')"
+          path = sys.argv[1]
+          cf = next((p for p in (".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS") if pathlib.Path(p).is_file()), None)
+          if not cf:
+              sys.exit("no CODEOWNERS file found")
+
+          def matches(pat, path):
+              anchored = pat.startswith("/")
+              p = pat.lstrip("/")
+              if p.endswith("/"):
+                  d = p.rstrip("/")
+                  return path.startswith(d + "/") if anchored else ("/" + path).find("/" + d + "/") >= 0
+              if anchored or "/" in p:
+                  return fnmatch.fnmatchcase(path, p) or path.startswith(p + "/")
+              return any(fnmatch.fnmatchcase(part, p) for part in path.split("/"))
+
+          owners = []
+          for line in pathlib.Path(cf).read_text(encoding="utf-8").splitlines():
+              line = line.split("#", 1)[0].strip()
+              if not line:
+                  continue
+              pat, *who = line.split()
+              if matches(pat, path):
+                  owners = who
+          for o in owners:
+              if o.startswith("@") and "/" in o:
+                  print("team:" + o[1:].lower())
+              elif o.startswith("@"):
+                  print("user:" + o[1:].lower())
+          PY
+          )"
+          [ -n "$OWNERS" ] || fail "CODEOWNERS defines no owner for $FILE."
+          OWNER_TEAMS="$(grep '^team:' <<< "$OWNERS" | cut -d: -f2 || true)"
+          OWNER_USERS="$(grep '^user:' <<< "$OWNERS" | cut -d: -f2 || true)"
+          echo "👥 Owners of $FILE: $(tr '\n' ' ' <<< "$OWNERS")"
+
+          # Is <login> allowed to approve? $2 = comma separated teams the review was made on behalf of.
+          is_owner() {
+            local login="$1" teams=",$2," team
+            grep -qxF "$login" <<< "$OWNER_USERS" && return 0
+            for team in $OWNER_TEAMS; do
+              [[ "$teams" == *",$team,"* ]] && return 0
+              if [ -n "${TEAM_TOKEN:-}" ] &&
+                 GH_TOKEN="$TEAM_TOKEN" gh api "orgs/${team%%/*}/teams/${team#*/}/memberships/$login" --jq '.state' 2>/dev/null | grep -qx active; then
+                return 0
+              fi
+            done
+            return 1
+          }
+
+          # Latest decisive review of each reviewer, with the teams it was made on behalf of.
+          # shellcheck disable=SC2016
+          REVIEWS="$(gh api graphql -f owner="${REPO%%/*}" -f repo="${REPO#*/}" -F pr="$PR_NUMBER" -f query='
+            query($owner: String!, $repo: String!, $pr: Int!) {
+              repository(owner: $owner, name: $repo) {
+                pullRequest(number: $pr) {
+                  reviews(first: 100) {
+                    nodes {
+                      state
+                      submittedAt
+                      author { login }
+                      commit { oid }
+                      onBehalfOf(first: 10) { nodes { slug organization { login } } }
+                    }
+                  }
+                }
+              }
+            }' --jq '.data.repository.pullRequest.reviews.nodes')"
+
           LATEST="$(jq -r --arg head "$HEAD_SHA" '
-            map(select(.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED"))
-            | group_by(.user.login | ascii_downcase)
-            | map(sort_by(.submitted_at) | last)
-            | .[] | [(.user.login | ascii_downcase), .state, ((.commit_id == $head) | tostring)] | @tsv' <<< "$REVIEWS")"
+            map(select(.author != null and (.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED")))
+            | group_by(.author.login | ascii_downcase)
+            | map(sort_by(.submittedAt) | last)
+            | .[] | [
+                (.author.login | ascii_downcase),
+                .state,
+                ((.commit.oid == $head) | tostring),
+                ([.onBehalfOf.nodes[] | (.organization.login + "/" + .slug) | ascii_downcase] | join(","))
+              ] | @tsv' <<< "$REVIEWS")"
 
           APPROVED_BY=""
-          while IFS=$'\t' read -r login state current; do
+          while IFS=$'\t' read -r login state current teams; do
             [ -z "$login" ] && continue
-            grep -qxF "$login" <<< "$APPROVERS" || continue
             [ "$login" = "$AUTHOR" ] && continue
+            is_owner "$login" "${teams:-}" || { echo "ℹ️  Ignoring $state from $login (not an owner; on behalf of: ${teams:-none})"; continue; }
             if [ "$state" = "CHANGES_REQUESTED" ]; then
               fail "$login requested changes on PR #$PR_NUMBER."
             fi
@@ -98,7 +172,7 @@ jobs:
             fi
           done <<< "$LATEST"
 
-          [ -n "$APPROVED_BY" ] || fail "PR #$PR_NUMBER has no approval on its final commit from a user in .github/pro-approvers.txt (other than its author)."
+          [ -n "$APPROVED_BY" ] || fail "PR #$PR_NUMBER has no approval on its final commit from a code owner of $FILE (other than its author)."
           echo "✅ Approved by $APPROVED_BY (requested by $AUTHOR)"
 
           # Read and validate the request.

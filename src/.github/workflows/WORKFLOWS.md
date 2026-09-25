@@ -125,12 +125,17 @@ Step 2. Runs on every push to the default branch that touches `deployments/pro/*
 **Approval rules** (checked by the workflow, independent of branch protection):
 - The commit comes from a merged pull request.
 - The pull request adds exactly one file, `deployments/pro/*.json`, and nothing else.
-- A login listed in `.github/pro-approvers.txt`, who is not the author, has an `APPROVED` review on the **final** commit of the pull request.
-- No listed approver has a pending `CHANGES_REQUESTED`.
+- An `APPROVED` review on the **final** commit of the pull request comes from a code owner of the request file, and that person is not the author.
+- No code owner has a pending `CHANGES_REQUESTED`.
+
+**Who is a code owner:** the workflow reads `CODEOWNERS` (`.github/`, root or `docs/`) and takes the owners of `deployments/pro/<file>.json` (last matching line wins). Nothing is hardcoded, so it follows each repository. A reviewer counts if:
+1. they are listed as a user owner, or
+2. their review was made *on behalf of* an owner team (GitHub records this when the team was requested as reviewer, which CODEOWNERS does automatically when the PR is opened), or
+3. optionally, the secret `MAISA_TEAM_READ_TOKEN` exists (a token with `read:org`, authorized for SSO) and the API confirms they are an active member of an owner team. This is a fallback in case 2 is not reported.
 
 Otherwise the run fails and nothing is deployed. If the checks pass, it calls `import-agents.yml` with `environment=pro` (validation, QA pre-check, import, QA tests, `deployed-pro.txt`).
 
-Anyone can merge; only an approver can approve. The list lives under `.github/`, so users cannot edit it.
+Anyone can merge; only a code owner can approve. `CODEOWNERS` is under `.github/`, so users cannot change who the owners are.
 
 ---
 
